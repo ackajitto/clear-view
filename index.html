@@ -107,14 +107,12 @@
             max-width: 1400px; 
             cursor: pointer;
             transition: transform 0.2s ease;
-            min-height: 500px; /* เพิ่ม Min-height เพื่อป้องกันหน้าเด้งขณะโหลดหน้าถัดไป */
         }
 
         @media (min-width: 768px) {
             .page-container {
                 width: 98%; /* บนแท็บเล็ต/ไอแพด ให้กว้าง 98% จะได้ขอบเล็กลง */
                 margin: 0 auto;
-                min-height: 800px;
             }
             #pdf-viewer {
                 gap: 12px; /* ลดช่องว่างบนแท็บเล็ต */
@@ -340,10 +338,6 @@
                 container.className = 'page-container';
                 container.id = 'page-' + pageNum;
                 
-                // จองพื้นที่ล่วงหน้าเพื่อป้องกันหน้าเด้ง
-                const initialViewport = page.getViewport({ scale: 1 });
-                container.style.aspectRatio = `${initialViewport.width} / ${initialViewport.height}`;
-                
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 
@@ -358,9 +352,6 @@
                     canvasContext: context,
                     viewport: viewport
                 };
-                
-                // แสดง container ก่อนเริ่มเรนเดอร์เนื้อหาข้างใน
-                viewer.appendChild(container);
                 
                 await page.render(renderContext).promise;
                 
@@ -387,10 +378,8 @@
                     }
                 };
                 container.appendChild(img);
-                
-                // เมื่อโหลดเสร็จแล้วให้นำ aspect-ratio ออกเพื่อให้ยืดหยุ่นตาม canvas จริง
-                container.style.aspectRatio = '';
-                container.style.minHeight = 'auto';
+
+                viewer.appendChild(container);
             }
         } catch (error) {
             loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถเปิดเอกสารได้ โปรดตรวจสอบไฟล์ของคุณ</div>`;

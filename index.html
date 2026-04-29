@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ClearView - Professional PDF Experience</title>
     
+    <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
+    <!-- Google Fonts: Anuphan (Modern Thai Font) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;500;700&display=swap" rel="stylesheet">
@@ -17,22 +19,34 @@
             --accent: #84cc16;
             --bg: #f8fafc;
             --header-bg: rgba(15, 23, 42, 0.9);
-            --share-color: #3b82f6;
+            --share-color: #3b82f6; /* เปลี่ยนสีปุ่มให้เป็นสีน้ำเงินมาตรฐานสำหรับการแชร์ */
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html { scroll-behavior: smooth; }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             font-family: 'Anuphan', sans-serif;
             background-color: var(--bg);
             color: var(--primary);
             overflow-x: hidden;
             position: relative;
         }
+
         header {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 60px;
+            position: absolute; /* เปลี่ยนจาก fixed เป็น absolute เพื่อให้เลื่อนหายไปตามเนื้อหา */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
             background: var(--header-bg);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
@@ -43,8 +57,18 @@
             padding: 0 20px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
         }
-        .logo { color: white; font-weight: 700; letter-spacing: 1px; font-size: 1.2rem; }
-        .logo span { color: var(--accent); }
+
+        .logo {
+            color: white;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
         .share-btn {
             background-color: var(--share-color);
             border: none;
@@ -60,72 +84,104 @@
             text-decoration: none;
             transition: opacity 0.2s;
         }
+
         #pdf-viewer {
             padding-top: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 8px; /* ลดช่องว่างระหว่างภาพด้านบน/ล่าง ให้แคบลง */
             padding-bottom: 40px;
             width: 100%;
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
         }
+
         .page-container {
             position: relative;
             background: white;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* ปรับเงาให้เข้ากับขอบที่แคบลง */
+            border-radius: 2px; /* ลดความโค้งของขอบให้ดูเต็มจอมากขึ้น */
             overflow: hidden;
-            width: 100%;
-            max-width: 1400px;
+            width: 100%; /* ปรับให้กว้างเต็มจอ 100% สำหรับมือถือ */
+            max-width: 1400px; 
             cursor: pointer;
             transition: transform 0.2s ease;
+            min-height: 500px; /* เพิ่ม Min-height เพื่อป้องกันหน้าเด้งขณะโหลดหน้าถัดไป */
         }
+
         @media (min-width: 768px) {
-            .page-container { width: 98%; margin: 0 auto; }
-            #pdf-viewer { gap: 12px; }
+            .page-container {
+                width: 98%; /* บนแท็บเล็ต/ไอแพด ให้กว้าง 98% จะได้ขอบเล็กลง */
+                margin: 0 auto;
+                min-height: 800px;
+            }
+            #pdf-viewer {
+                gap: 12px; /* ลดช่องว่างบนแท็บเล็ต */
+            }
         }
+
         @media (min-width: 1200px) {
-            .page-container { width: 96%; }
+            .page-container {
+                width: 96%; /* บนคอมพิวเตอร์ ให้กว้าง 96% */
+            }
         }
-        canvas { display: block; width: 100% !important; height: auto !important; }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+
         .tap-zone {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 20;
         }
+
         .save-layer {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             opacity: 0;
-            z-index: 30;
-            -webkit-touch-callout: default;
+            /* นำ pointer-events: none; ออก เพื่อให้กดรับสัมผัสได้ */
+            z-index: 30; /* ย้ายมาอยู่เลเยอร์บนสุดให้แตะและกดค้างได้ */
+            -webkit-touch-callout: default; /* ให้มือถือ/ไอแพดเรียกเมนู Save Image ได้ */
         }
+
         #loader {
             position: fixed;
-            top: 50%; left: 50%;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
             z-index: 2000;
         }
+
         .spinner {
-            width: 50px; height: 50px;
+            width: 50px;
+            height: 50px;
             border: 5px solid rgba(132, 204, 22, 0.1);
             border-top: 5px solid var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 15px;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
         .page-indicator {
             position: fixed;
-            bottom: 25px; left: 25px;
+            bottom: 25px;
+            left: 25px;
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px);
             color: white;
@@ -138,10 +194,13 @@
             pointer-events: none;
             border: 1px solid rgba(255,255,255,0.1);
         }
+
         #back-to-top {
             position: fixed;
-            bottom: 25px; right: 25px;
-            width: 50px; height: 50px;
+            bottom: 25px;
+            right: 25px;
+            width: 50px;
+            height: 50px;
             background-color: var(--accent);
             color: white;
             border: none;
@@ -157,19 +216,23 @@
             visibility: hidden;
             transform: translateY(20px);
         }
+
         #back-to-top.show {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
         }
+
         #back-to-top svg {
-            width: 28px; height: 28px;
+            width: 28px;
+            height: 28px;
             fill: none;
             stroke: white;
             stroke-width: 3;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
+
         footer {
             padding: 50px 20px;
             text-align: center;
@@ -185,7 +248,7 @@
 
 <header>
     <div class="logo">CLEAR<span>VIEW</span></div>
-    <button type="button" id="system-share" class="share-btn">
+    <button id="system-share" class="share-btn">
         <svg style="width:18px; height:18px; fill:none; stroke:white; stroke-width:2;" viewBox="0 0 24 24">
             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
         </svg>
@@ -202,7 +265,7 @@
 
 <div class="page-indicator" id="page-indicator">หน้า 1 / -</div>
 
-<button type="button" id="back-to-top" title="กลับไปด้านบน">
+<button id="back-to-top" title="กลับไปด้านบน">
     <svg viewBox="0 0 24 24">
         <path d="M18 15l-6-6-6 6" />
     </svg>
@@ -229,9 +292,9 @@
     let pdfDoc = null;
     let totalPages = 0;
 
+    // ระบบแชร์แบบมาตรฐาน (Web Share API)
     async function setupShare() {
-        shareBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
+        shareBtn.addEventListener('click', async () => {
             if (navigator.share) {
                 try {
                     await navigator.share({
@@ -239,17 +302,23 @@
                         text: 'ลองอ่านเอกสารนี้ผ่าน ClearView ประสบการณ์ใหม่ในการอ่าน PDF',
                         url: window.location.href,
                     });
-                } catch (err) {}
+                } catch (err) {
+                    console.log('Share cancelled or failed');
+                }
             } else {
+                // กรณีเบราว์เซอร์ไม่รองรับ Web Share API ให้คัดลอกลิงก์แทน
                 const dummy = document.createElement('input');
                 document.body.appendChild(dummy);
                 dummy.value = window.location.href;
                 dummy.select();
                 document.execCommand('copy');
                 document.body.removeChild(dummy);
+                
                 const originalText = shareBtn.innerHTML;
                 shareBtn.innerHTML = 'คัดลอกลิงก์แล้ว!';
-                setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+                setTimeout(() => {
+                    shareBtn.innerHTML = originalText;
+                }, 2000);
             }
         });
     }
@@ -270,9 +339,10 @@
                 const container = document.createElement('div');
                 container.className = 'page-container';
                 container.id = 'page-' + pageNum;
-
-                // ✅ เพิ่มบรรทัดนี้ (กันเด้งตอนโหลด)
-                container.style.minHeight = '120vh';
+                
+                // จองพื้นที่ล่วงหน้าเพื่อป้องกันหน้าเด้ง
+                const initialViewport = page.getViewport({ scale: 1 });
+                container.style.aspectRatio = `${initialViewport.width} / ${initialViewport.height}`;
                 
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
@@ -284,7 +354,15 @@
                 canvas.height = viewport.height * dpr;
                 context.scale(dpr, dpr);
 
-                await page.render({ canvasContext: context, viewport }).promise;
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                // แสดง container ก่อนเริ่มเรนเดอร์เนื้อหาข้างใน
+                viewer.appendChild(container);
+                
+                await page.render(renderContext).promise;
                 
                 container.appendChild(canvas);
 
@@ -301,6 +379,7 @@
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
+                
                 img.onclick = (e) => {
                     e.stopPropagation();
                     if (pageNum < totalPages) {
@@ -308,26 +387,35 @@
                     }
                 };
                 container.appendChild(img);
-
-                viewer.appendChild(container);
+                
+                // เมื่อโหลดเสร็จแล้วให้นำ aspect-ratio ออกเพื่อให้ยืดหยุ่นตาม canvas จริง
+                container.style.aspectRatio = '';
+                container.style.minHeight = 'auto';
             }
         } catch (error) {
-            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถเปิดเอกสารได้</div>`;
+            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถเปิดเอกสารได้ โปรดตรวจสอบไฟล์ของคุณ</div>`;
         }
     }
 
     function scrollToPage(targetPage) {
         const targetElement = document.getElementById('page-' + targetPage);
         if (targetElement) {
-            const offset = 20;
-            const offsetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
-            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            const offset = 20; 
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
         }
     }
 
-    backToTopBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     });
 
     window.addEventListener('scroll', () => {

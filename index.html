@@ -52,15 +52,9 @@
             z-index: 1000;
             display: flex;
             align-items: center;
-            justify-content: space-between; /* ปรับให้โลโก้อยู่กลางและมีปุ่มแชร์ด้านขวา */
+            justify-content: space-between; /* จัดวางโลโก้ซ้าย และปุ่มแชร์ขวา */
             padding: 0 15px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        /* ใช้เพื่อช่วยจัดกึ่งกลางโลโก้ */
-        header::before {
-            content: '';
-            width: 40px;
         }
 
         .logo {
@@ -68,8 +62,7 @@
             font-weight: 700;
             letter-spacing: 1px;
             font-size: 1.2rem;
-            flex-grow: 1;
-            text-align: center;
+            text-align: left; /* ขยับโลโก้มาชิดซ้าย */
         }
 
         .logo span {

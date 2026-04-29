@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ClearView - Professional PDF Experience</title>
     
-    <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
-    <!-- Google Fonts: Anuphan (Modern Thai Font) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;500;700&display=swap" rel="stylesheet">
@@ -231,9 +229,6 @@
     let pdfDoc = null;
     let totalPages = 0;
 
-    // ✅ เพิ่มตัวนี้
-    let isScrolling = false;
-
     async function setupShare() {
         shareBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -275,6 +270,9 @@
                 const container = document.createElement('div');
                 container.className = 'page-container';
                 container.id = 'page-' + pageNum;
+
+                // ✅ เพิ่มบรรทัดนี้ (กันเด้งตอนโหลด)
+                container.style.minHeight = '120vh';
                 
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
@@ -292,32 +290,25 @@
 
                 const tapZone = document.createElement('div');
                 tapZone.className = 'tap-zone';
-
-                // ✅ แก้ตรงนี้
-                tapZone.addEventListener('touchstart', () => { isScrolling = false; });
-                tapZone.addEventListener('touchmove', () => { isScrolling = true; });
-                tapZone.addEventListener('click', (e) => {
+                tapZone.onclick = (e) => {
                     e.stopPropagation();
-                    if (isScrolling) return;
-                    if (pageNum < totalPages) scrollToPage(pageNum + 1);
-                });
-
+                    if (pageNum < totalPages) {
+                        scrollToPage(pageNum + 1);
+                    }
+                };
                 container.appendChild(tapZone);
 
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
-
-                // ✅ แก้ตรงนี้
-                img.addEventListener('touchstart', () => { isScrolling = false; });
-                img.addEventListener('touchmove', () => { isScrolling = true; });
-                img.addEventListener('click', (e) => {
+                img.onclick = (e) => {
                     e.stopPropagation();
-                    if (isScrolling) return;
-                    if (pageNum < totalPages) scrollToPage(pageNum + 1);
-                });
-
+                    if (pageNum < totalPages) {
+                        scrollToPage(pageNum + 1);
+                    }
+                };
                 container.appendChild(img);
+
                 viewer.appendChild(container);
             }
         } catch (error) {

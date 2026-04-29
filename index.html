@@ -38,10 +38,11 @@
             background-color: var(--bg);
             color: var(--primary);
             overflow-x: hidden;
+            position: relative;
         }
 
         header {
-            position: fixed; /* เปลี่ยนเป็น fixed เพื่อให้ค้างอยู่ด้านบนตลอดเวลา */
+            position: absolute; /* เปลี่ยนจาก fixed เป็น absolute เพื่อให้เลื่อนหายไปตามเนื้อหา */
             top: 0;
             left: 0;
             width: 100%;
@@ -92,7 +93,6 @@
             gap: 20px;
             padding-bottom: 40px;
             width: 100%;
-            /* ปรับให้ขยายเต็มที่ใน iPad/PC */
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
         }
@@ -103,13 +103,12 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             border-radius: 4px;
             overflow: hidden;
-            width: 98%; /* สำหรับมือถือเกือบเต็มจอ */
-            max-width: 1400px; /* ขยายสูงสุดให้กว้างขึ้นสำหรับ iPad Pro / PC */
+            width: 98%; 
+            max-width: 1400px; 
             cursor: pointer;
             transition: transform 0.2s ease;
         }
 
-        /* ปรับแต่งสำหรับ iPad (768px ขึ้นไป) */
         @media (min-width: 768px) {
             .page-container {
                 width: 95%;
@@ -120,7 +119,6 @@
             }
         }
 
-        /* สำหรับจอคอมพิวเตอร์ขนาดใหญ่ */
         @media (min-width: 1200px) {
             .page-container {
                 width: 90%;
@@ -317,7 +315,6 @@
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 
-                // ใช้ Scale 3.0 เพื่อความคมชัดสูงบนหน้าจอ iPad Retina
                 const baseScale = 3.0;
                 const viewport = page.getViewport({ scale: baseScale });
 
@@ -359,7 +356,7 @@
     function scrollToPage(targetPage) {
         const targetElement = document.getElementById('page-' + targetPage);
         if (targetElement) {
-            const offset = 80; 
+            const offset = 20; // ปรับ offset ให้น้อยลงเนื่องจาก header ไม่ค้างแล้ว
             const elementPosition = targetElement.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - offset;
 

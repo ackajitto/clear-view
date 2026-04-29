@@ -19,7 +19,7 @@
             --accent: #84cc16;
             --bg: #f8fafc;
             --header-bg: rgba(15, 23, 42, 0.9);
-            --line-color: #06C755;
+            --share-color: #3b82f6; /* เปลี่ยนสีปุ่มให้เป็นสีน้ำเงินมาตรฐานสำหรับการแชร์ */
         }
 
         * {
@@ -69,8 +69,8 @@
             color: var(--accent);
         }
 
-        .line-share-btn {
-            background-color: var(--line-color);
+        .share-btn {
+            background-color: var(--share-color);
             border: none;
             border-radius: 8px;
             color: white;
@@ -246,12 +246,12 @@
 
 <header>
     <div class="logo">CLEAR<span>VIEW</span></div>
-    <a id="line-share" href="#" class="line-share-btn" target="_blank">
-        <svg style="width:18px; height:18px; fill:white;" viewBox="0 0 24 24">
-            <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738s-12 4.369-12 9.738c0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.121.303.079.778.039 1.085l-.171 1.027c-.052.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.893 2.572-5.992zM6.825 14.101h-2.39c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h.654c.359 0 .653.292.653.653v4.547h1.083c.36 0 .653.293.653.654v.001c0 .358-.293.651-.653.651zm2.344 0h-.654c-.361 0-.653-.293-.653-.652v-5.201c0-.361.292-.653.653-.653h.654c.36 0 .653.292.653.653v5.201c0 .359-.293.652-.653.652zm6.208 0h-2.39c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h.654c.359 0 .652.292.652.653v3.13l2.203-3.129c.148-.211.332-.358.604-.358h.749c.5 0 .762.531.422.898l-1.848 1.996 1.962 3.122c.285.454-.047 1.012-.574 1.012h-.809c-.279 0-.488-.137-.629-.362l-1.047-1.666v1.378c0 .359-.293.652-.653.652zm4.316-1.12c0 .36-.293.652-.653.652h-2.391c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h2.391c.36 0 .653.292.653.653v.001c0 .36-.293.653-.653.653h-1.738v1.173h1.738c.36 0 .653.293.653.654v.001c0 .358-.293.651-.653.651h-1.738v1.173h1.738c.36 0 .653.293.653.654v.001z"/>
+    <button id="system-share" class="share-btn">
+        <svg style="width:18px; height:18px; fill:none; stroke:white; stroke-width:2;" viewBox="0 0 24 24">
+            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
         </svg>
-        LINE
-    </a>
+        แชร์
+    </button>
 </header>
 
 <div id="loader">
@@ -284,21 +284,46 @@
     const viewer = document.getElementById('pdf-viewer');
     const loader = document.getElementById('loader');
     const pageIndicator = document.getElementById('page-indicator');
-    const lineBtn = document.getElementById('line-share');
+    const shareBtn = document.getElementById('system-share');
     const backToTopBtn = document.getElementById('back-to-top');
 
     let pdfDoc = null;
     let totalPages = 0;
 
-    function setupLineShare() {
-        const currentUrl = window.location.href;
-        const lineShareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(currentUrl)}`;
-        lineBtn.href = lineShareUrl;
+    // ระบบแชร์แบบมาตรฐาน (Web Share API)
+    async function setupShare() {
+        shareBtn.addEventListener('click', async () => {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'ClearView PDF Experience',
+                        text: 'ลองอ่านเอกสารนี้ผ่าน ClearView ประสบการณ์ใหม่ในการอ่าน PDF',
+                        url: window.location.href,
+                    });
+                } catch (err) {
+                    console.log('Share cancelled or failed');
+                }
+            } else {
+                // กรณีเบราว์เซอร์ไม่รองรับ Web Share API ให้คัดลอกลิงก์แทน
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                
+                const originalText = shareBtn.innerHTML;
+                shareBtn.innerHTML = 'คัดลอกลิงก์แล้ว!';
+                setTimeout(() => {
+                    shareBtn.innerHTML = originalText;
+                }, 2000);
+            }
+        });
     }
 
     async function loadPDF() {
         try {
-            setupLineShare();
+            setupShare();
             pdfDoc = await pdfjsLib.getDocument(url).promise;
             totalPages = pdfDoc.numPages;
             loader.style.display = 'none';
@@ -316,7 +341,6 @@
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 
-                // ใช้ Scale 3.0 เพื่อคงความคมชัดสูงสุดระดับ Ultra-HD
                 const baseScale = 3.0;
                 const viewport = page.getViewport({ scale: baseScale });
 
@@ -343,12 +367,10 @@
                 };
                 container.appendChild(tapZone);
 
-                // ภาพเสมือน (Overlay Image) สำหรับกดค้างเพื่อเซฟ
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
                 
-                // เพิ่ม onclick ลงในภาพด้วย เพื่อให้รับการคลิกเปลี่ยนหน้าได้เหมือน tapZone
                 img.onclick = (e) => {
                     e.stopPropagation();
                     if (pageNum < totalPages) {

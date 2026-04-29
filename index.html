@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Professional PDF Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #84cc16;
+            --bg: #f1f5f9;
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Anuphan', sans-serif;
+            background-color: var(--bg);
+            overflow-x: hidden;
+        }
+        /* Header แบบ Glassmorphism */
+        header {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .search-container {
+            width: 90%; max-width: 500px; position: relative;
+        }
+        input#search-input {
+            width: 100%; padding: 12px 20px;
+            border-radius: 30px; border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white; font-size: 16px; outline: none;
+            transition: 0.3s;
+        }
+        input#search-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+        #pdf-viewer {
+            margin-top: 80px;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 15px; padding-bottom: 50px;
+        }
+        .page-container {
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background: white;
+            line-height: 0;
+        }
+        canvas {
+            max-width: 100vw; height: auto !important;
+        }
+        /* สถานะการโหลด */
+        #loader {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-weight: bold; color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="พิมพ์คำค้นหาแล้วกด Enter (เช่น หน้า 5)...">
+    </div>
+</header>
+
+<div id="loader">กำลังเตรียมเอกสาร...</div>
+<div id="pdf-viewer"></div>
+
+<script>
+    // --- ตั้งค่าไฟล์ PDF ของคุณตรงนี้ ---
+    const url = 'YOUR_FILE_NAME.pdf'; 
+    // ----------------------------
+
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const viewer = document.getElementById('pdf-viewer');
+    const searchInput = document.getElementById('search-input');
+    const loader = document.getElementById('loader');
+
+    let pdfDoc = null;
+
+    // ฟังก์ชันเรนเดอร์ทุกหน้าเรียงลงไป
+    async function loadPDF() {
+        try {
+            pdfDoc = await pdfjsLib.getDocument(url).promise;
+            loader.style.display = 'none';
+
+            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                const page = await pdfDoc.getPage(pageNum);
+                
+                const container = document.createElement('div');
+                container.className = 'page-container';
+                container.id = 'page-' + pageNum;
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                
+                // ปรับสเกลให้ชัดบนมือถือ (2.0 คือชัดมาก)
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = { canvasContext: context, viewport: viewport };
+                await page.render(renderContext).promise;
+                
+                container.appendChild(canvas);
+                viewer.appendChild(container);
+            }
+        } catch (error) {
+            loader.innerText = "ไม่พบไฟล์ PDF กรุณาตรวจสอบชื่อไฟล์";
+            console.error(error);
+        }
+    }
+
+    // ระบบค้นหาและเด้งไปหน้านั้น (Jump to Page)
+    // รองรับทั้งพิมพ์เลขหน้า "5" หรือคำที่ต้องการ (ในเวอร์ชันนี้เน้นเลขหน้าเพื่อความแม่นยำบนมือถือ)
+    searchInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            const val = searchInput.value.trim();
+            const pageNum = parseInt(val.replace(/\D/g, "")); // ดึงเอาเฉพาะตัวเลข
+
+            if (pageNum > 0 && pageNum <= pdfDoc.numPages) {
+                const target = document.getElementById('page-' + pageNum);
+                if (target) {
+                    window.scrollTo({
+                        top: target.offsetTop - 80, // เว้นระยะจาก Header 80px
+                        behavior: 'smooth'
+                    });
+                }
+            } else {
+                alert("ไม่พบหน้านี้ในเอกสาร");
+            }
+        }
+    });
+
+    loadPDF();
+</script>
+
+</body>
+</html>
+
+หวังว่าไฟล์พรีเซนต์และชุดโค้ดนี้จะช่วยให้งานของคุณออกมาดูเป็นมืออาชีพและใช้งานง่ายที่สุดนะครับ! หากต้องการปรับแต่งส่วนไหนเพิ่มเติม บอกได้เลยครับ!

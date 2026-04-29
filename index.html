@@ -1,435 +1,142 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ClearView - Professional PDF Experience</title>
-    
-    <!-- PDF.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    
-    <!-- Google Fonts: Anuphan (Modern Thai Font) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #0f172a;
-            --accent: #84cc16;
-            --bg: #f8fafc;
-            --header-bg: rgba(15, 23, 42, 0.9);
-            --share-color: #3b82f6; /* เปลี่ยนสีปุ่มให้เป็นสีน้ำเงินมาตรฐานสำหรับการแชร์ */
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearView - Smooth PDF Viewer</title>
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-        html {
-            scroll-behavior: smooth;
-        }
+<style>
+body{
+    margin:0;
+    font-family:sans-serif;
+    background:#f8fafc;
+}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Anuphan', sans-serif;
-            background-color: var(--bg);
-            color: var(--primary);
-            overflow-x: hidden;
-            position: relative;
-        }
+#pdf-viewer{
+    padding-top:60px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+}
 
-        header {
-            position: absolute; /* เปลี่ยนจาก fixed เป็น absolute เพื่อให้เลื่อนหายไปตามเนื้อหา */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background: var(--header-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-        }
+.page{
+    width:100%;
+    max-width:900px;
+    background:white;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
 
-        .logo {
-            color: white;
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-size: 1.2rem;
-        }
-
-        .logo span {
-            color: var(--accent);
-        }
-
-        .share-btn {
-            background-color: var(--share-color);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-
-        #pdf-viewer {
-            padding-top: 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px; /* ลดช่องว่างระหว่างภาพด้านบน/ล่าง ให้แคบลง */
-            padding-bottom: 40px;
-            width: 100%;
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-        }
-
-        .page-container {
-            position: relative;
-            background: white;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* ปรับเงาให้เข้ากับขอบที่แคบลง */
-            border-radius: 2px; /* ลดความโค้งของขอบให้ดูเต็มจอมากขึ้น */
-            overflow: hidden;
-            width: 100%; /* ปรับให้กว้างเต็มจอ 100% สำหรับมือถือ */
-            max-width: 1400px; 
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        @media (min-width: 768px) {
-            .page-container {
-                width: 98%; /* บนแท็บเล็ต/ไอแพด ให้กว้าง 98% จะได้ขอบเล็กลง */
-                margin: 0 auto;
-            }
-            #pdf-viewer {
-                gap: 12px; /* ลดช่องว่างบนแท็บเล็ต */
-            }
-        }
-
-        @media (min-width: 1200px) {
-            .page-container {
-                width: 96%; /* บนคอมพิวเตอร์ ให้กว้าง 96% */
-            }
-        }
-
-        canvas {
-            display: block;
-            width: 100% !important;
-            height: auto !important;
-        }
-
-        .tap-zone {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 20;
-        }
-
-        .save-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            /* นำ pointer-events: none; ออก เพื่อให้กดรับสัมผัสได้ */
-            z-index: 30; /* ย้ายมาอยู่เลเยอร์บนสุดให้แตะและกดค้างได้ */
-            -webkit-touch-callout: default; /* ให้มือถือ/ไอแพดเรียกเมนู Save Image ได้ */
-        }
-
-        #loader {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 2000;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(132, 204, 22, 0.1);
-            border-top: 5px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .page-indicator {
-            position: fixed;
-            bottom: 25px;
-            left: 25px;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 8px 18px;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 999;
-            pointer-events: none;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        #back-to-top {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 50px;
-            height: 50px;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 20px rgba(132, 204, 22, 0.4);
-            z-index: 1000;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(20px);
-        }
-
-        #back-to-top.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        #back-to-top svg {
-            width: 28px;
-            height: 28px;
-            fill: none;
-            stroke: white;
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        footer {
-            padding: 50px 20px;
-            text-align: center;
-            color: #64748b;
-            font-size: 14px;
-            border-top: 1px solid #e2e8f0;
-            background-color: white;
-            width: 100%;
-        }
-    </style>
+canvas{
+    width:100%;
+    height:auto;
+    display:block;
+}
+</style>
 </head>
+
 <body>
-
-<header>
-    <div class="logo">CLEAR<span>VIEW</span></div>
-    <button id="system-share" class="share-btn">
-        <svg style="width:18px; height:18px; fill:none; stroke:white; stroke-width:2;" viewBox="0 0 24 24">
-            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
-        </svg>
-        แชร์
-    </button>
-</header>
-
-<div id="loader">
-    <div class="spinner"></div>
-    <div style="color: var(--primary); font-size: 16px; font-weight:500;">กำลังประมวลผลเอกสารความละเอียดสูง...</div>
-</div>
 
 <div id="pdf-viewer"></div>
 
-<div class="page-indicator" id="page-indicator">หน้า 1 / -</div>
-
-<button id="back-to-top" title="กลับไปด้านบน">
-    <svg viewBox="0 0 24 24">
-        <path d="M18 15l-6-6-6 6" />
-    </svg>
-</button>
-
-<footer>
-    <div class="copyright">
-        © 2026 ClearView Professional. เพื่อประสบการณ์การอ่านที่ดีที่สุด
-    </div>
-</footer>
-
 <script>
-    const url = 'pdfs/01.pdf'; 
+const url = 'pdfs/01.pdf';
 
-    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    const viewer = document.getElementById('pdf-viewer');
-    const loader = document.getElementById('loader');
-    const pageIndicator = document.getElementById('page-indicator');
-    const shareBtn = document.getElementById('system-share');
-    const backToTopBtn = document.getElementById('back-to-top');
+const viewer = document.getElementById('pdf-viewer');
 
-    let pdfDoc = null;
-    let totalPages = 0;
+let pdfDoc = null;
 
-    // ระบบแชร์แบบมาตรฐาน (Web Share API)
-    async function setupShare() {
-        shareBtn.addEventListener('click', async () => {
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'ClearView PDF Experience',
-                        text: 'ลองอ่านเอกสารนี้ผ่าน ClearView ประสบการณ์ใหม่ในการอ่าน PDF',
-                        url: window.location.href,
-                    });
-                } catch (err) {
-                    console.log('Share cancelled or failed');
-                }
-            } else {
-                // กรณีเบราว์เซอร์ไม่รองรับ Web Share API ให้คัดลอกลิงก์แทน
-                const dummy = document.createElement('input');
-                document.body.appendChild(dummy);
-                dummy.value = window.location.href;
-                dummy.select();
-                document.execCommand('copy');
-                document.body.removeChild(dummy);
-                
-                const originalText = shareBtn.innerHTML;
-                shareBtn.innerHTML = 'คัดลอกลิงก์แล้ว!';
-                setTimeout(() => {
-                    shareBtn.innerHTML = originalText;
-                }, 2000);
+// จำกัด performance
+const MAX_DPR = 2;
+const SCALE = 1.5;
+
+// เก็บหน้าที่ render แล้ว
+const renderedPages = new Set();
+
+async function renderPage(pageNum){
+    if(renderedPages.has(pageNum)) return;
+
+    const page = await pdfDoc.getPage(pageNum);
+
+    const container = document.getElementById('page-'+pageNum);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    const viewport = page.getViewport({ scale: SCALE });
+
+    canvas.width = viewport.width * dpr;
+    canvas.height = viewport.height * dpr;
+
+    context.scale(dpr, dpr);
+
+    await page.render({
+        canvasContext: context,
+        viewport: viewport
+    }).promise;
+
+    container.innerHTML = '';
+    container.appendChild(canvas);
+
+    renderedPages.add(pageNum);
+}
+
+// Lazy Load ด้วย IntersectionObserver
+function setupLazyLoad(){
+    const observer = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+            if(entry.isIntersecting){
+                const pageNum = parseInt(entry.target.dataset.page);
+                renderPage(pageNum);
             }
         });
-    }
-
-    async function loadPDF() {
-        try {
-            setupShare();
-            pdfDoc = await pdfjsLib.getDocument(url).promise;
-            totalPages = pdfDoc.numPages;
-            loader.style.display = 'none';
-            pageIndicator.innerText = `หน้า 1 / ${totalPages}`;
-
-            const dpr = window.devicePixelRatio || 1;
-
-            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-                const page = await pdfDoc.getPage(pageNum);
-                
-                const container = document.createElement('div');
-                container.className = 'page-container';
-                container.id = 'page-' + pageNum;
-                
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                
-                const baseScale = 3.0;
-                const viewport = page.getViewport({ scale: baseScale });
-
-                canvas.width = viewport.width * dpr;
-                canvas.height = viewport.height * dpr;
-                context.scale(dpr, dpr);
-
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
-                
-                await page.render(renderContext).promise;
-                
-                container.appendChild(canvas);
-
-                const tapZone = document.createElement('div');
-                tapZone.className = 'tap-zone';
-                tapZone.onclick = (e) => {
-                    e.stopPropagation();
-                    if (pageNum < totalPages) {
-                        scrollToPage(pageNum + 1);
-                    }
-                };
-                container.appendChild(tapZone);
-
-                const img = document.createElement('img');
-                img.src = canvas.toDataURL('image/png');
-                img.className = 'save-layer';
-                
-                img.onclick = (e) => {
-                    e.stopPropagation();
-                    if (pageNum < totalPages) {
-                        scrollToPage(pageNum + 1);
-                    }
-                };
-                container.appendChild(img);
-
-                viewer.appendChild(container);
-            }
-        } catch (error) {
-            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถเปิดเอกสารได้ โปรดตรวจสอบไฟล์ของคุณ</div>`;
-        }
-    }
-
-    function scrollToPage(targetPage) {
-        const targetElement = document.getElementById('page-' + targetPage);
-        if (targetElement) {
-            const offset = 20; 
-            const elementPosition = targetElement.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
-        }
-    }
-
-    backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
+    },{
+        rootMargin: '200px' // โหลดล่วงหน้า
     });
 
-    window.addEventListener('scroll', () => {
-        if (window.pageYOffset > 400) {
-            backToTopBtn.classList.add('show');
-        } else {
-            backToTopBtn.classList.remove('show');
-        }
-
-        const containers = document.querySelectorAll('.page-container');
-        let currentPage = 1;
-        
-        containers.forEach(container => {
-            const rect = container.getBoundingClientRect();
-            if (rect.top < window.innerHeight * 0.4 && rect.bottom > window.innerHeight * 0.4) {
-                currentPage = container.id.split('-')[1];
-            }
-        });
-        
-        if (pdfDoc) {
-            pageIndicator.innerText = `หน้า ${currentPage} / ${totalPages}`;
-        }
+    document.querySelectorAll('.page').forEach(el=>{
+        observer.observe(el);
     });
+}
 
-    loadPDF();
+async function init(){
+    pdfDoc = await pdfjsLib.getDocument(url).promise;
+
+    const totalPages = pdfDoc.numPages;
+
+    // สร้าง placeholder ก่อน (เบามาก)
+    for(let i=1;i<=totalPages;i++){
+        const div = document.createElement('div');
+        div.className = 'page';
+        div.id = 'page-'+i;
+        div.dataset.page = i;
+
+        // skeleton loading
+        div.innerHTML = `
+            <div style="
+                height:500px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#999;
+            ">
+                Loading page ${i}...
+            </div>
+        `;
+
+        viewer.appendChild(div);
+    }
+
+    setupLazyLoad();
+}
+
+init();
 </script>
 
 </body>

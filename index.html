@@ -19,6 +19,7 @@
             --accent: #84cc16;
             --bg: #f8fafc;
             --header-bg: rgba(15, 23, 42, 0.9);
+            --line-color: #06C755;
         }
 
         * {
@@ -51,8 +52,15 @@
             z-index: 1000;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between; /* ปรับให้โลโก้อยู่กลางและมีปุ่มแชร์ด้านขวา */
+            padding: 0 15px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ใช้เพื่อช่วยจัดกึ่งกลางโลโก้ */
+        header::before {
+            content: '';
+            width: 40px;
         }
 
         .logo {
@@ -60,10 +68,40 @@
             font-weight: 700;
             letter-spacing: 1px;
             font-size: 1.2rem;
+            flex-grow: 1;
+            text-align: center;
         }
 
         .logo span {
             color: var(--accent);
+        }
+
+        /* ปุ่มแชร์ไป Line */
+        .line-share-btn {
+            background-color: var(--line-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+            width: fit-content;
+        }
+
+        .line-share-btn:active {
+            opacity: 0.8;
+        }
+
+        .line-icon {
+            width: 16px;
+            height: 16px;
+            fill: white;
         }
 
         #pdf-viewer {
@@ -170,6 +208,12 @@
 
 <header>
     <div class="logo">CLEAR<span>VIEW</span></div>
+    <a id="line-share" href="#" class="line-share-btn" target="_blank">
+        <svg class="line-icon" viewBox="0 0 24 24">
+            <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738s-12 4.369-12 9.738c0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.121.303.079.778.039 1.085l-.171 1.027c-.052.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.893 2.572-5.992zM6.825 14.101h-2.39c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h.654c.359 0 .653.292.653.653v4.547h1.083c.36 0 .653.293.653.654v.001c0 .358-.293.651-.653.651zm2.344 0h-.654c-.361 0-.653-.293-.653-.652v-5.201c0-.361.292-.653.653-.653h.654c.36 0 .653.292.653.653v5.201c0 .359-.293.652-.653.652zm6.208 0h-2.39c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h.654c.359 0 .652.292.652.653v3.13l2.203-3.129c.148-.211.332-.358.604-.358h.749c.5 0 .762.531.422.898l-1.848 1.996 1.962 3.122c.285.454-.047 1.012-.574 1.012h-.809c-.279 0-.488-.137-.629-.362l-1.047-1.666v1.378c0 .359-.293.652-.653.652zm4.316-1.12c0 .36-.293.652-.653.652h-2.391c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h2.391c.36 0 .653.292.653.653v.001c0 .36-.293.653-.653.653h-1.738v1.173h1.738c.36 0 .653.293.653.654v.001c0 .358-.293.651-.653.651h-1.738v1.173h1.738c.36 0 .653.293.653.654v.001z"/>
+        </svg>
+        LINE
+    </a>
 </header>
 
 <div id="loader">
@@ -196,12 +240,21 @@
     const viewer = document.getElementById('pdf-viewer');
     const loader = document.getElementById('loader');
     const pageIndicator = document.getElementById('page-indicator');
+    const lineBtn = document.getElementById('line-share');
 
     let pdfDoc = null;
     let totalPages = 0;
 
+    // ตั้งค่าลิงก์แชร์ไป Line
+    function setupLineShare() {
+        const currentUrl = window.location.href;
+        const lineShareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(currentUrl)}`;
+        lineBtn.href = lineShareUrl;
+    }
+
     async function loadPDF() {
         try {
+            setupLineShare();
             pdfDoc = await pdfjsLib.getDocument(url).promise;
             totalPages = pdfDoc.numPages;
             loader.style.display = 'none';

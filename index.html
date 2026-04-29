@@ -26,6 +26,10 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html {
+            scroll-behavior: smooth; /* ทำให้เลื่อนหน้าแบบนุ่มนวล */
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -35,7 +39,6 @@
             overflow-x: hidden;
         }
 
-        /* Header แบบไม่ค้าง (Absolute) - จะเลื่อนหายไปเมื่อ scroll ลง */
         header {
             position: absolute;
             top: 0;
@@ -63,9 +66,8 @@
             color: var(--accent);
         }
 
-        /* PDF Viewer Container */
         #pdf-viewer {
-            padding-top: 75px; /* เว้นระยะให้ Header ในตอนแรก */
+            padding-top: 75px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -83,6 +85,7 @@
             overflow: hidden;
             width: 100%;
             max-width: 900px;
+            cursor: pointer;
         }
 
         canvas {
@@ -91,7 +94,27 @@
             height: auto !important;
         }
 
-        /* เลเยอร์สำหรับกดค้างเพื่อบันทึกรูป */
+        /* เลเยอร์สำหรับตรวจจับการแตะซ้าย-ขวา */
+        .tap-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            z-index: 20;
+        }
+
+        .tap-left {
+            flex: 1;
+            /* background: rgba(255,0,0,0.1); // เปิดเพื่อ debug */
+        }
+
+        .tap-right {
+            flex: 1;
+            /* background: rgba(0,255,0,0.1); // เปิดเพื่อ debug */
+        }
+
         .save-layer {
             position: absolute;
             top: 0;
@@ -99,12 +122,10 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            cursor: pointer;
+            pointer-events: none; /* ปิด pointer-events เพื่อไม่ให้ขวาง tap-zone แต่ยังเก็บเมนูกดค้างได้ในบางเครื่อง */
             z-index: 10;
-            -webkit-touch-callout: default;
         }
 
-        /* สถานะการโหลด */
         #loader {
             position: fixed;
             top: 50%;
@@ -129,7 +150,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ตัวเลขบอกหน้าแบบลอย */
         .page-indicator {
             position: fixed;
             bottom: 20px;
@@ -143,9 +163,9 @@
             font-weight: 500;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             z-index: 999;
+            pointer-events: none;
         }
 
-        /* Footer Section */
         footer {
             padding: 40px 20px;
             text-align: center;
@@ -154,13 +174,6 @@
             border-top: 1px solid #e2e8f0;
             background-color: white;
             width: 100%;
-        }
-
-        .copyright {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
         }
     </style>
 </head>
@@ -172,7 +185,7 @@
 
 <div id="loader">
     <div class="spinner"></div>
-    <div style="color: var(--primary); font-size: 14px;">กำลังโหลดเอกสารความละเอียดสูงพิเศษ...</div>
+    <div style="color: var(--primary); font-size: 14px;">กำลังโหลดเอกสาร...</div>
 </div>
 
 <div id="pdf-viewer"></div>
@@ -196,16 +209,18 @@
     const pageIndicator = document.getElementById('page-indicator');
 
     let pdfDoc = null;
+    let totalPages = 0;
 
     async function loadPDF() {
         try {
             pdfDoc = await pdfjsLib.getDocument(url).promise;
+            totalPages = pdfDoc.numPages;
             loader.style.display = 'none';
-            pageIndicator.innerText = `หน้า 1 / ${pdfDoc.numPages}`;
+            pageIndicator.innerText = `หน้า 1 / ${totalPages}`;
 
             const dpr = window.devicePixelRatio || 1;
 
-            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 const page = await pdfDoc.getPage(pageNum);
                 
                 const container = document.createElement('div');
@@ -215,15 +230,11 @@
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 
-                // เพิ่มความละเอียดการเรนเดอร์เป็น 2.5 เพื่อความชัดสูงสุด
                 const baseScale = 2.5;
                 const viewport = page.getViewport({ scale: baseScale });
 
-                // ตั้งขนาด canvas ตาม dpr และ scale ที่สูงขึ้น
                 canvas.width = viewport.width * dpr;
                 canvas.height = viewport.height * dpr;
-                
-                // บังคับการวาดให้ขยายตาม dpr
                 context.scale(dpr, dpr);
 
                 const renderContext = {
@@ -235,22 +246,56 @@
                 
                 container.appendChild(canvas);
 
-                // สร้างภาพสำหรับกดบันทึก (แปลงจาก canvas ที่เรนเดอร์ชัดๆ)
+                // สร้าง Tap Zones สำหรับคลิกเลื่อนหน้า
+                const tapZone = document.createElement('div');
+                tapZone.className = 'tap-zone';
+                
+                const tapLeft = document.createElement('div');
+                tapLeft.className = 'tap-left';
+                tapLeft.onclick = (e) => {
+                    e.stopPropagation();
+                    scrollToPage(pageNum - 1);
+                };
+
+                const tapRight = document.createElement('div');
+                tapRight.className = 'tap-right';
+                tapRight.onclick = (e) => {
+                    e.stopPropagation();
+                    scrollToPage(pageNum + 1);
+                };
+
+                tapZone.appendChild(tapLeft);
+                tapZone.appendChild(tapRight);
+                container.appendChild(tapZone);
+
+                // ภาพสำหรับเซฟ (ใส่ไว้ล่าง tapZone เพื่อไม่ให้ขวางคลิก)
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
-                img.alt = `Page ${pageNum}`;
                 container.appendChild(img);
 
                 viewer.appendChild(container);
             }
         } catch (error) {
-            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถโหลดไฟล์ได้<br><small>ตรวจสอบว่าไฟล์อยู่ที่ pdfs/01.pdf</small></div>`;
-            console.error(error);
+            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถโหลดไฟล์ได้</div>`;
         }
     }
 
-    // ระบบอัปเดตเลขหน้าขณะเลื่อน
+    function scrollToPage(targetPage) {
+        if (targetPage < 1 || targetPage > totalPages) return;
+        const targetElement = document.getElementById('page-' + targetPage);
+        if (targetElement) {
+            const offset = 70; // เผื่อระยะ header
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+
     window.addEventListener('scroll', () => {
         const containers = document.querySelectorAll('.page-container');
         let currentPage = 1;
@@ -263,7 +308,7 @@
         });
         
         if (pdfDoc) {
-            pageIndicator.innerText = `หน้า ${currentPage} / ${pdfDoc.numPages}`;
+            pageIndicator.innerText = `หน้า ${currentPage} / ${totalPages}`;
         }
     });
 

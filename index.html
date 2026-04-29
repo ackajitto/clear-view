@@ -94,25 +94,14 @@
             height: auto !important;
         }
 
-        /* เลเยอร์สำหรับตรวจจับการแตะซ้าย-ขวา */
+        /* เลเยอร์สำหรับตรวจจับการแตะเพื่อไปหน้าถัดไป */
         .tap-zone {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
             z-index: 20;
-        }
-
-        .tap-left {
-            flex: 1;
-            /* background: rgba(255,0,0,0.1); // เปิดเพื่อ debug */
-        }
-
-        .tap-right {
-            flex: 1;
-            /* background: rgba(0,255,0,0.1); // เปิดเพื่อ debug */
         }
 
         .save-layer {
@@ -122,7 +111,7 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            pointer-events: none; /* ปิด pointer-events เพื่อไม่ให้ขวาง tap-zone แต่ยังเก็บเมนูกดค้างได้ในบางเครื่อง */
+            pointer-events: none; 
             z-index: 10;
         }
 
@@ -246,29 +235,19 @@
                 
                 container.appendChild(canvas);
 
-                // สร้าง Tap Zones สำหรับคลิกเลื่อนหน้า
+                // สร้าง Tap Zone สำหรับคลิกเพื่อไปหน้าถัดไปเท่านั้น
                 const tapZone = document.createElement('div');
                 tapZone.className = 'tap-zone';
-                
-                const tapLeft = document.createElement('div');
-                tapLeft.className = 'tap-left';
-                tapLeft.onclick = (e) => {
+                tapZone.onclick = (e) => {
                     e.stopPropagation();
-                    scrollToPage(pageNum - 1);
+                    // ถ้ายังไม่ใช่หน้าสุดท้าย ให้เลื่อนไปหน้าถัดไป
+                    if (pageNum < totalPages) {
+                        scrollToPage(pageNum + 1);
+                    }
                 };
-
-                const tapRight = document.createElement('div');
-                tapRight.className = 'tap-right';
-                tapRight.onclick = (e) => {
-                    e.stopPropagation();
-                    scrollToPage(pageNum + 1);
-                };
-
-                tapZone.appendChild(tapLeft);
-                tapZone.appendChild(tapRight);
                 container.appendChild(tapZone);
 
-                // ภาพสำหรับเซฟ (ใส่ไว้ล่าง tapZone เพื่อไม่ให้ขวางคลิก)
+                // ภาพสำหรับเซฟ
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
@@ -282,7 +261,6 @@
     }
 
     function scrollToPage(targetPage) {
-        if (targetPage < 1 || targetPage > totalPages) return;
         const targetElement = document.getElementById('page-' + targetPage);
         if (targetElement) {
             const offset = 70; // เผื่อระยะ header

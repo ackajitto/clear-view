@@ -90,7 +90,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 8px; /* ลดช่องว่างระหว่างภาพด้านบน/ล่าง ให้แคบลง */
             padding-bottom: 40px;
             width: 100%;
             padding-left: env(safe-area-inset-left);
@@ -100,10 +100,10 @@
         .page-container {
             position: relative;
             background: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* ปรับเงาให้เข้ากับขอบที่แคบลง */
+            border-radius: 2px; /* ลดความโค้งของขอบให้ดูเต็มจอมากขึ้น */
             overflow: hidden;
-            width: 98%; 
+            width: 100%; /* ปรับให้กว้างเต็มจอ 100% สำหรับมือถือ */
             max-width: 1400px; 
             cursor: pointer;
             transition: transform 0.2s ease;
@@ -111,17 +111,17 @@
 
         @media (min-width: 768px) {
             .page-container {
-                width: 95%;
+                width: 98%; /* บนแท็บเล็ต/ไอแพด ให้กว้าง 98% จะได้ขอบเล็กลง */
                 margin: 0 auto;
             }
             #pdf-viewer {
-                gap: 30px;
+                gap: 12px; /* ลดช่องว่างบนแท็บเล็ต */
             }
         }
 
         @media (min-width: 1200px) {
             .page-container {
-                width: 90%;
+                width: 96%; /* บนคอมพิวเตอร์ ให้กว้าง 96% */
             }
         }
 
@@ -147,7 +147,7 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            /* แก้ไข: นำ pointer-events: none; ออก เพื่อให้กดรับสัมผัสได้ */
+            /* นำ pointer-events: none; ออก เพื่อให้กดรับสัมผัสได้ */
             z-index: 30; /* ย้ายมาอยู่เลเยอร์บนสุดให้แตะและกดค้างได้ */
             -webkit-touch-callout: default; /* ให้มือถือ/ไอแพดเรียกเมนู Save Image ได้ */
         }
@@ -348,7 +348,7 @@
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
                 
-                // แก้ไข: เพิ่ม onclick ลงในภาพด้วย เพื่อให้รับการคลิกเปลี่ยนหน้าได้เหมือน tapZone
+                // เพิ่ม onclick ลงในภาพด้วย เพื่อให้รับการคลิกเปลี่ยนหน้าได้เหมือน tapZone
                 img.onclick = (e) => {
                     e.stopPropagation();
                     if (pageNum < totalPages) {

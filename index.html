@@ -147,8 +147,9 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            pointer-events: none; 
-            z-index: 10;
+            /* แก้ไข: นำ pointer-events: none; ออก เพื่อให้กดรับสัมผัสได้ */
+            z-index: 30; /* ย้ายมาอยู่เลเยอร์บนสุดให้แตะและกดค้างได้ */
+            -webkit-touch-callout: default; /* ให้มือถือ/ไอแพดเรียกเมนู Save Image ได้ */
         }
 
         #loader {
@@ -315,6 +316,7 @@
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 
+                // ใช้ Scale 3.0 เพื่อคงความคมชัดสูงสุดระดับ Ultra-HD
                 const baseScale = 3.0;
                 const viewport = page.getViewport({ scale: baseScale });
 
@@ -341,9 +343,18 @@
                 };
                 container.appendChild(tapZone);
 
+                // ภาพเสมือน (Overlay Image) สำหรับกดค้างเพื่อเซฟ
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
+                
+                // แก้ไข: เพิ่ม onclick ลงในภาพด้วย เพื่อให้รับการคลิกเปลี่ยนหน้าได้เหมือน tapZone
+                img.onclick = (e) => {
+                    e.stopPropagation();
+                    if (pageNum < totalPages) {
+                        scrollToPage(pageNum + 1);
+                    }
+                };
                 container.appendChild(img);
 
                 viewer.appendChild(container);
@@ -356,7 +367,7 @@
     function scrollToPage(targetPage) {
         const targetElement = document.getElementById('page-' + targetPage);
         if (targetElement) {
-            const offset = 20; // ปรับ offset ให้น้อยลงเนื่องจาก header ไม่ค้างแล้ว
+            const offset = 20; 
             const elementPosition = targetElement.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - offset;
 

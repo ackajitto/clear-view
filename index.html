@@ -246,7 +246,8 @@
 
 <header>
     <div class="logo">CLEAR<span>VIEW</span></div>
-    <button id="system-share" class="share-btn">
+    <!-- เพิ่ม type="button" เพื่อป้องกันการเด้งไปหน้าแรกเวลาแชร์ในบางเบราว์เซอร์ -->
+    <button type="button" id="system-share" class="share-btn">
         <svg style="width:18px; height:18px; fill:none; stroke:white; stroke-width:2;" viewBox="0 0 24 24">
             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
         </svg>
@@ -263,7 +264,7 @@
 
 <div class="page-indicator" id="page-indicator">หน้า 1 / -</div>
 
-<button id="back-to-top" title="กลับไปด้านบน">
+<button type="button" id="back-to-top" title="กลับไปด้านบน">
     <svg viewBox="0 0 24 24">
         <path d="M18 15l-6-6-6 6" />
     </svg>
@@ -271,7 +272,7 @@
 
 <footer>
     <div class="copyright">
-        © 2026 ClearView . 
+        © 2026 ClearView Professional. เพื่อประสบการณ์การอ่านที่ดีที่สุด
     </div>
 </footer>
 
@@ -292,7 +293,8 @@
 
     // ระบบแชร์แบบมาตรฐาน (Web Share API)
     async function setupShare() {
-        shareBtn.addEventListener('click', async () => {
+        shareBtn.addEventListener('click', async (e) => {
+            e.preventDefault(); // ป้องกันพฤติกรรมเริ่มต้นที่อาจทำให้หน้าเด้ง
             if (navigator.share) {
                 try {
                     await navigator.share({
@@ -400,7 +402,9 @@
         }
     }
 
-    backToTopBtn.addEventListener('click', () => {
+    // แก้ไขให้ทำงานเฉพาะเมื่อมีการกดปุ่มเท่านั้น
+    backToTopBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         window.scrollTo({
             top: 0,
             behavior: 'smooth'

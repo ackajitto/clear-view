@@ -186,6 +186,54 @@
             pointer-events: none;
         }
 
+        /* ปุ่มเลื่อนไปบนสุด (Back to Top) */
+        #back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(132, 204, 22, 0.4);
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+        }
+
+        #back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        #back-to-top:hover {
+            background-color: #6da312;
+            transform: scale(1.1);
+        }
+
+        #back-to-top:active {
+            transform: scale(0.9);
+        }
+
+        #back-to-top svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
         footer {
             padding: 40px 20px;
             text-align: center;
@@ -218,6 +266,13 @@
 
 <div class="page-indicator" id="page-indicator">หน้า 1 / -</div>
 
+<!-- ปุ่มน่ารักๆ สำหรับกลับไปด้านบน -->
+<button id="back-to-top" title="กลับไปด้านบน">
+    <svg viewBox="0 0 24 24">
+        <path d="M18 15l-6-6-6 6" />
+    </svg>
+</button>
+
 <footer>
     <div class="copyright">
         © 2026 ClearView. All rights reserved.
@@ -234,6 +289,7 @@
     const loader = document.getElementById('loader');
     const pageIndicator = document.getElementById('page-indicator');
     const lineBtn = document.getElementById('line-share');
+    const backToTopBtn = document.getElementById('back-to-top');
 
     let pdfDoc = null;
     let totalPages = 0;
@@ -320,7 +376,22 @@
         }
     }
 
+    // ฟังก์ชันเลื่อนกลับไปด้านบนสุด
+    backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
     window.addEventListener('scroll', () => {
+        // แสดงหรือซ่อนปุ่ม Back to Top
+        if (window.pageYOffset > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+
         const containers = document.querySelectorAll('.page-container');
         let currentPage = 1;
         

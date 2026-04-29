@@ -70,7 +70,7 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            padding-bottom: 80px;
+            padding-bottom: 20px;
             padding-left: 8px;
             padding-right: 8px;
         }
@@ -144,6 +144,24 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             z-index: 999;
         }
+
+        /* Footer Section */
+        footer {
+            padding: 40px 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+            background-color: white;
+            width: 100%;
+        }
+
+        .copyright {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
@@ -160,6 +178,12 @@
 <div id="pdf-viewer"></div>
 
 <div class="page-indicator" id="page-indicator">หน้า 1 / -</div>
+
+<footer>
+    <div class="copyright">
+        © 2026 ClearView. All rights reserved.
+    </div>
+</footer>
 
 <script>
     const url = 'pdfs/01.pdf'; 

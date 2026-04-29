@@ -28,7 +28,7 @@
         }
 
         html {
-            scroll-behavior: smooth; /* ทำให้เลื่อนหน้าแบบนุ่มนวล */
+            scroll-behavior: smooth;
         }
 
         body {
@@ -41,7 +41,7 @@
         }
 
         header {
-            position: absolute;
+            position: fixed; /* เปลี่ยนเป็น fixed เพื่อให้ค้างอยู่ด้านบนตลอดเวลา */
             top: 0;
             left: 0;
             width: 100%;
@@ -52,8 +52,8 @@
             z-index: 1000;
             display: flex;
             align-items: center;
-            justify-content: space-between; /* จัดวางโลโก้ซ้าย และปุ่มแชร์ขวา */
-            padding: 0 15px;
+            justify-content: space-between;
+            padding: 0 20px;
             box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
         }
 
@@ -62,61 +62,69 @@
             font-weight: 700;
             letter-spacing: 1px;
             font-size: 1.2rem;
-            text-align: left; /* ขยับโลโก้มาชิดซ้าย */
         }
 
         .logo span {
             color: var(--accent);
         }
 
-        /* ปุ่มแชร์ไป Line */
         .line-share-btn {
             background-color: var(--line-color);
             border: none;
             border-radius: 8px;
             color: white;
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 8px 16px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             text-decoration: none;
             transition: opacity 0.2s;
-            width: fit-content;
-        }
-
-        .line-share-btn:active {
-            opacity: 0.8;
-        }
-
-        .line-icon {
-            width: 16px;
-            height: 16px;
-            fill: white;
         }
 
         #pdf-viewer {
-            padding-top: 75px;
+            padding-top: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            padding-bottom: 20px;
-            padding-left: 8px;
-            padding-right: 8px;
+            gap: 20px;
+            padding-bottom: 40px;
+            width: 100%;
+            /* ปรับให้ขยายเต็มที่ใน iPad/PC */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         .page-container {
             position: relative;
             background: white;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             border-radius: 4px;
             overflow: hidden;
-            width: 100%;
-            max-width: 900px;
+            width: 98%; /* สำหรับมือถือเกือบเต็มจอ */
+            max-width: 1400px; /* ขยายสูงสุดให้กว้างขึ้นสำหรับ iPad Pro / PC */
             cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        /* ปรับแต่งสำหรับ iPad (768px ขึ้นไป) */
+        @media (min-width: 768px) {
+            .page-container {
+                width: 95%;
+                margin: 0 auto;
+            }
+            #pdf-viewer {
+                gap: 30px;
+            }
+        }
+
+        /* สำหรับจอคอมพิวเตอร์ขนาดใหญ่ */
+        @media (min-width: 1200px) {
+            .page-container {
+                width: 90%;
+            }
         }
 
         canvas {
@@ -125,7 +133,6 @@
             height: auto !important;
         }
 
-        /* เลเยอร์สำหรับตรวจจับการแตะเพื่อไปหน้าถัดไป */
         .tap-zone {
             position: absolute;
             top: 0;
@@ -156,13 +163,13 @@
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(132, 204, 22, 0.1);
-            border-top: 4px solid var(--accent);
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(132, 204, 22, 0.1);
+            border-top: 5px solid var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -172,27 +179,27 @@
 
         .page-indicator {
             position: fixed;
-            bottom: 20px;
-            left: 20px; /* ย้ายจาก right: 20px มาเป็น left: 20px แทน */
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(5px);
+            bottom: 25px;
+            left: 25px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
             color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 14px;
             font-weight: 500;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             z-index: 999;
             pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* ปุ่มเลื่อนไปบนสุด (Back to Top) */
         #back-to-top {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
+            bottom: 25px;
+            right: 25px;
+            width: 50px;
+            height: 50px;
             background-color: var(--accent);
             color: white;
             border: none;
@@ -201,7 +208,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(132, 204, 22, 0.4);
+            box-shadow: 0 6px 20px rgba(132, 204, 22, 0.4);
             z-index: 1000;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             opacity: 0;
@@ -215,18 +222,9 @@
             transform: translateY(0);
         }
 
-        #back-to-top:hover {
-            background-color: #6da312;
-            transform: scale(1.1);
-        }
-
-        #back-to-top:active {
-            transform: scale(0.9);
-        }
-
         #back-to-top svg {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             fill: none;
             stroke: white;
             stroke-width: 3;
@@ -235,7 +233,7 @@
         }
 
         footer {
-            padding: 40px 20px;
+            padding: 50px 20px;
             text-align: center;
             color: #64748b;
             font-size: 14px;
@@ -250,7 +248,7 @@
 <header>
     <div class="logo">CLEAR<span>VIEW</span></div>
     <a id="line-share" href="#" class="line-share-btn" target="_blank">
-        <svg class="line-icon" viewBox="0 0 24 24">
+        <svg style="width:18px; height:18px; fill:white;" viewBox="0 0 24 24">
             <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738s-12 4.369-12 9.738c0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.121.303.079.778.039 1.085l-.171 1.027c-.052.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.893 2.572-5.992zM6.825 14.101h-2.39c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h.654c.359 0 .653.292.653.653v4.547h1.083c.36 0 .653.293.653.654v.001c0 .358-.293.651-.653.651zm2.344 0h-.654c-.361 0-.653-.293-.653-.652v-5.201c0-.361.292-.653.653-.653h.654c.36 0 .653.292.653.653v5.201c0 .359-.293.652-.653.652zm6.208 0h-2.39c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h.654c.359 0 .652.292.652.653v3.13l2.203-3.129c.148-.211.332-.358.604-.358h.749c.5 0 .762.531.422.898l-1.848 1.996 1.962 3.122c.285.454-.047 1.012-.574 1.012h-.809c-.279 0-.488-.137-.629-.362l-1.047-1.666v1.378c0 .359-.293.652-.653.652zm4.316-1.12c0 .36-.293.652-.653.652h-2.391c-.36 0-.653-.293-.653-.652v-5.201c0-.361.293-.653.653-.653h2.391c.36 0 .653.292.653.653v.001c0 .36-.293.653-.653.653h-1.738v1.173h1.738c.36 0 .653.293.653.654v.001c0 .358-.293.651-.653.651h-1.738v1.173h1.738c.36 0 .653.293.653.654v.001z"/>
         </svg>
         LINE
@@ -259,14 +257,13 @@
 
 <div id="loader">
     <div class="spinner"></div>
-    <div style="color: var(--primary); font-size: 14px;">กำลังโหลดเอกสาร...</div>
+    <div style="color: var(--primary); font-size: 16px; font-weight:500;">กำลังประมวลผลเอกสารความละเอียดสูง...</div>
 </div>
 
 <div id="pdf-viewer"></div>
 
 <div class="page-indicator" id="page-indicator">หน้า 1 / -</div>
 
-<!-- ปุ่มน่ารักๆ สำหรับกลับไปด้านบน -->
 <button id="back-to-top" title="กลับไปด้านบน">
     <svg viewBox="0 0 24 24">
         <path d="M18 15l-6-6-6 6" />
@@ -275,7 +272,7 @@
 
 <footer>
     <div class="copyright">
-        © 2026 ClearView. All rights reserved.
+        © 2026 ClearView Professional. เพื่อประสบการณ์การอ่านที่ดีที่สุด
     </div>
 </footer>
 
@@ -294,7 +291,6 @@
     let pdfDoc = null;
     let totalPages = 0;
 
-    // ตั้งค่าลิงก์แชร์ไป Line
     function setupLineShare() {
         const currentUrl = window.location.href;
         const lineShareUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(currentUrl)}`;
@@ -321,7 +317,8 @@
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 
-                const baseScale = 2.5;
+                // ใช้ Scale 3.0 เพื่อความคมชัดสูงบนหน้าจอ iPad Retina
+                const baseScale = 3.0;
                 const viewport = page.getViewport({ scale: baseScale });
 
                 canvas.width = viewport.width * dpr;
@@ -337,19 +334,16 @@
                 
                 container.appendChild(canvas);
 
-                // สร้าง Tap Zone สำหรับคลิกเพื่อไปหน้าถัดไปเท่านั้น
                 const tapZone = document.createElement('div');
                 tapZone.className = 'tap-zone';
                 tapZone.onclick = (e) => {
                     e.stopPropagation();
-                    // ถ้ายังไม่ใช่หน้าสุดท้าย ให้เลื่อนไปหน้าถัดไป
                     if (pageNum < totalPages) {
                         scrollToPage(pageNum + 1);
                     }
                 };
                 container.appendChild(tapZone);
 
-                // ภาพสำหรับเซฟ
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
                 img.className = 'save-layer';
@@ -358,14 +352,14 @@
                 viewer.appendChild(container);
             }
         } catch (error) {
-            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถโหลดไฟล์ได้</div>`;
+            loader.innerHTML = `<div style="color:red; padding: 20px;">⚠️ ไม่สามารถเปิดเอกสารได้ โปรดตรวจสอบไฟล์ของคุณ</div>`;
         }
     }
 
     function scrollToPage(targetPage) {
         const targetElement = document.getElementById('page-' + targetPage);
         if (targetElement) {
-            const offset = 70; // เผื่อระยะ header
+            const offset = 80; 
             const elementPosition = targetElement.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - offset;
 
@@ -376,7 +370,6 @@
         }
     }
 
-    // ฟังก์ชันเลื่อนกลับไปด้านบนสุด
     backToTopBtn.addEventListener('click', () => {
         window.scrollTo({
             top: 0,
@@ -385,8 +378,7 @@
     });
 
     window.addEventListener('scroll', () => {
-        // แสดงหรือซ่อนปุ่ม Back to Top
-        if (window.pageYOffset > 300) {
+        if (window.pageYOffset > 400) {
             backToTopBtn.classList.add('show');
         } else {
             backToTopBtn.classList.remove('show');
@@ -397,7 +389,7 @@
         
         containers.forEach(container => {
             const rect = container.getBoundingClientRect();
-            if (rect.top < window.innerHeight / 2 && rect.bottom > window.innerHeight / 2) {
+            if (rect.top < window.innerHeight * 0.4 && rect.bottom > window.innerHeight * 0.4) {
                 currentPage = container.id.split('-')[1];
             }
         });

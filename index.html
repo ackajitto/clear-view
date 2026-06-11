@@ -1,143 +1,151 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClearView - Smooth PDF Viewer</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-<style>
-body{
-    margin:0;
-    font-family:sans-serif;
-    background:#f8fafc;
-}
-
-#pdf-viewer{
-    padding-top:60px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:12px;
-}
-
-.page{
-    width:100%;
-    max-width:900px;
-    background:white;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-canvas{
-    width:100%;
-    height:auto;
-    display:block;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free AI Hub - ง่ายสุด</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #0f0f0f; color: white; }
+    .chat { max-width: 800px; margin: auto; height: 80vh; display: flex; flex-direction: column; }
+    .messages { flex: 1; overflow-y: auto; padding: 15px; background: #1a1a1a; border-radius: 10px; margin-bottom: 10px; }
+    .message { margin: 10px 0; padding: 12px; border-radius: 10px; max-width: 80%; }
+    .user { background: #007bff; margin-left: auto; }
+    .ai { background: #333; }
+    input { flex: 1; padding: 15px; font-size: 16px; border: none; border-radius: 10px; background: #222; color: white; }
+    button { padding: 15px 25px; background: #28a745; border: none; border-radius: 10px; color: white; cursor: pointer; }
+    select { padding: 10px; background: #222; color: white; border-radius: 8px; }
+  </style>
 </head>
-
 <body>
+  <div class="chat">
+    <h1>Free AI Hub (เวอร์ชั่นง่าย)</h1>
+    
+    <div>
+      <select id="model">
+        <option value="groq">Groq (เร็วมาก - Llama)</option>
+        <option value="gemini">Gemini (Google - ฟรีดี)</option>
+        <option value="openrouter">OpenRouter (หลายโมเดลฟรี)</option>
+      </select>
+      <small>ใส่ API Key ของแต่ละตัวด้านล่าง (ฟรี)</small>
+    </div>
 
-<div id="pdf-viewer"></div>
+    <div class="messages" id="messages"></div>
 
-<script>
-const url = 'pdfs/01.pdf';
+    <div style="display: flex; gap: 10px;">
+      <input type="text" id="input" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()">ส่ง</button>
+    </div>
 
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    <p style="text-align:center; font-size:12px; margin-top:10px;">
+      วิธีใช้: ไป claim API Key แต่ละตัว แล้วใส่ด้านล่าง (จะเก็บในเบราว์เซอร์)
+    </p>
+  </div>
 
-const viewer = document.getElementById('pdf-viewer');
-
-let pdfDoc = null;
-
-// จำกัด performance
-const MAX_DPR = 2;
-const SCALE = 1.5;
-
-// เก็บหน้าที่ render แล้ว
-const renderedPages = new Set();
-
-async function renderPage(pageNum){
-    if(renderedPages.has(pageNum)) return;
-
-    const page = await pdfDoc.getPage(pageNum);
-
-    const container = document.getElementById('page-'+pageNum);
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    const viewport = page.getViewport({ scale: SCALE });
-
-    canvas.width = viewport.width * dpr;
-    canvas.height = viewport.height * dpr;
-
-    context.scale(dpr, dpr);
-
-    await page.render({
-        canvasContext: context,
-        viewport: viewport
-    }).promise;
-
-    container.innerHTML = '';
-    container.appendChild(canvas);
-
-    renderedPages.add(pageNum);
-}
-
-// Lazy Load ด้วย IntersectionObserver
-function setupLazyLoad(){
-    const observer = new IntersectionObserver((entries)=>{
-        entries.forEach(entry=>{
-            if(entry.isIntersecting){
-                const pageNum = parseInt(entry.target.dataset.page);
-                renderPage(pageNum);
-            }
-        });
-    },{
-        rootMargin: '200px' // โหลดล่วงหน้า
-    });
-
-    document.querySelectorAll('.page').forEach(el=>{
-        observer.observe(el);
-    });
-}
-
-async function init(){
-    pdfDoc = await pdfjsLib.getDocument(url).promise;
-
-    const totalPages = pdfDoc.numPages;
-
-    // สร้าง placeholder ก่อน (เบามาก)
-    for(let i=1;i<=totalPages;i++){
-        const div = document.createElement('div');
-        div.className = 'page';
-        div.id = 'page-'+i;
-        div.dataset.page = i;
-
-        // skeleton loading
-        div.innerHTML = `
-            <div style="
-                height:500px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#999;
-            ">
-                Loading page ${i}...
-            </div>
-        `;
-
-        viewer.appendChild(div);
+  <script>
+    // เก็บ key ใน localStorage
+    function getKey(provider) {
+      return localStorage.getItem(provider + '_key') || '';
+    }
+    function setKey(provider, key) {
+      localStorage.setItem(provider + '_key', key);
     }
 
-    setupLazyLoad();
-}
+    // ตัวอย่างใส่ key (คุณต้องไป claim เอง)
+    const keys = {
+      groq: getKey('groq'),
+      gemini: getKey('gemini'),
+      openrouter: getKey('openrouter')
+    };
 
-init();
-</script>
+    async function sendMessage() {
+      const input = document.getElementById('input');
+      const messagesDiv = document.getElementById('messages');
+      const modelSelect = document.getElementById('model').value;
 
+      if (!input.value.trim()) return;
+
+      // แสดงข้อความผู้ใช้
+      messagesDiv.innerHTML += `<div class="message user">${input.value}</div>`;
+      const userText = input.value;
+      input.value = '';
+
+      // แสดง "กำลังคิด..."
+      const loadingId = 'loading_' + Date.now();
+      messagesDiv.innerHTML += `<div class="message ai" id="${loadingId}">กำลังคิด...</div>`;
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      try {
+        let responseText = "เกิดข้อผิดพลาด";
+
+        if (modelSelect === 'groq') {
+          responseText = await callGroq(userText);
+        } else if (modelSelect === 'gemini') {
+          responseText = await callGemini(userText);
+        } else {
+          responseText = await callOpenRouter(userText);
+        }
+
+        document.getElementById(loadingId).innerHTML = responseText;
+      } catch (e) {
+        document.getElementById(loadingId).innerHTML = "เกิดข้อผิดพลาด: " + e.message;
+      }
+    }
+
+    // ================== เรียกแต่ละ API ==================
+    async function callGroq(text) {
+      const key = prompt("ใส่ Groq API Key (หรือกด Cancel แล้วใส่ครั้งเดียว):", keys.groq);
+      if (key) setKey('groq', key);
+
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key || keys.groq}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "llama3-70b-8192",
+          messages: [{ role: "user", content: text }],
+          temperature: 0.7
+        })
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+
+    async function callGemini(text) {
+      const key = prompt("ใส่ Gemini API Key:", keys.gemini);
+      if (key) setKey('gemini', key);
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key || keys.gemini}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: text }] }]
+        })
+      });
+      const data = await res.json();
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    async function callOpenRouter(text) {
+      const key = prompt("ใส่ OpenRouter API Key:", keys.openrouter);
+      if (key) setKey('openrouter', key);
+
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key || keys.openrouter}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.href
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.0-flash-exp:free",
+          messages: [{ role: "user", content: text }]
+        })
+      });
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+  </script>
 </body>
 </html>

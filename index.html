@@ -2,558 +2,194 @@
 <html lang="th">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Free AI Hub</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial;
+            background: #0b0b0b;
+            color: white;
+            padding: 20px;
+        }
 
-<title>Safe Free AI Hub</title>
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
 
+        h1 {
+            text-align: center;
+            color: #00ff99;
+        }
 
-<style>
+        .panel {
+            background: #1d1d1d;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
 
-body{
+        select, input, button {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            margin: 5px;
+        }
 
-font-family:Arial;
-background:#0b0b0b;
-color:white;
-padding:20px;
+        input, select {
+            background: #333;
+            color: white;
+        }
 
-}
+        button {
+            background: #00cc77;
+            color: white;
+            cursor: pointer;
+        }
 
+        .messages {
+            background: #151515;
+            min-height: 500px;
+            padding: 20px;
+            border-radius: 15px;
+            overflow: auto;
+        }
 
-.container{
+        .msg {
+            padding: 12px;
+            margin: 10px;
+            border-radius: 12px;
+        }
 
-max-width:900px;
-margin:auto;
+        .user {
+            background: #0066ff;
+            margin-left: 20%;
+        }
 
-}
-
-
-h1{
-
-text-align:center;
-color:#00ff99;
-
-}
-
-
-.panel{
-
-background:#1d1d1d;
-padding:15px;
-border-radius:15px;
-margin-bottom:15px;
-
-}
-
-
-select,input,button{
-
-padding:12px;
-border-radius:10px;
-border:none;
-margin:5px;
-
-}
-
-
-input,select{
-
-background:#333;
-color:white;
-
-}
-
-
-button{
-
-background:#00cc77;
-color:white;
-cursor:pointer;
-
-}
-
-
-
-.messages{
-
-background:#151515;
-min-height:500px;
-padding:20px;
-border-radius:15px;
-overflow:auto;
-
-}
-
-
-.msg{
-
-padding:12px;
-margin:10px;
-border-radius:12px;
-
-}
-
-
-.user{
-
-background:#0066ff;
-margin-left:20%;
-
-}
-
-
-.ai{
-
-background:#333;
-
-}
-
-
-
-</style>
-
+        .ai {
+            background: #333;
+        }
+    </style>
 </head>
-
-
 
 <body>
 
-
-<div class="container">
-
-
-<h1>
-🤖 Safe Free AI Hub
-</h1>
-
-
-
-<div class="panel">
-
-
-<select id="model">
-
-
-<option value="deepseek/deepseek-chat-v3:free">
-
-🧠 DeepSeek V3 Free
-
-</option>
-
-
-
-<option value="qwen/qwen3:free">
-
-🐼 Qwen3 Free
-
-</option>
-
-
-
-<option value="google/gemini-2.5-flash:free">
-
-✨ Gemini Free
-
-</option>
-
-
-</select>
-
-
-
-<br>
-
-
-<input 
-id="key"
-placeholder="OpenRouter API Key"
-style="width:80%">
-
-
-
-<button onclick="checkKey()">
-
-🔍 เช็ก Key
-
-</button>
-
-
-
-</div>
-
-
-
-
-
-<div id="messages"
-class="messages">
-
-</div>
-
-
-
-
-<div class="panel">
-
-
-<input 
-id="text"
-placeholder="พิมพ์ข้อความ..."
-style="width:70%"
-onkeypress="if(event.key==='Enter')send()">
-
-
-
-<button onclick="send()">
-
-ส่ง
-
-</button>
-
-
-</div>
-
-
-
-
-</div>
-
-
-
-
-
-
-<script>
-
-
-
-const keyInput =
-document.getElementById("key");
-
-
-
-keyInput.value =
-localStorage.getItem("or_key") || "";
-
-
-
-
-
-function saveKey(){
-
-localStorage.setItem(
-"or_key",
-keyInput.value.trim()
-);
-
-}
-
-
-
-
-
-
-async function checkKey(){
-
-
-saveKey();
-
-
-let key=keyInput.value.trim();
-
-
-if(!key){
-
-alert("ใส่ Key ก่อน");
-
-return;
-
-}
-
-
-
-
-let r =
-await fetch(
-"https://openrouter.ai/api/v1/key",
-{
-
-headers:{
-
-Authorization:
-`Bearer ${key}`
-
-}
-
-}
-
-);
-
-
-let d =
-await r.json();
-
-
-alert(
-JSON.stringify(d,null,2)
-);
-
-
-}
-
-
-
-
-
-
-
-
-
-async function send(){
-
-
-
-let text =
-document.getElementById("text")
-.value.trim();
-
-
-
-if(!text)return;
-
-
-
-let box =
-document.getElementById("messages");
-
-
-
-box.innerHTML +=
-
-`
-<div class="msg user">
-${text}
-</div>
-`;
-
-
-
-document.getElementById("text")
-.value="";
-
-
-
-
-
-let loading =
-document.createElement("div");
-
-
-loading.className="msg ai";
-
-loading.innerHTML="กำลังคิด...";
-
-
-box.appendChild(loading);
-
-
-
-
-
-try{
-
-
-let answer =
-await callAI(text);
-
-
-
-loading.innerHTML =
-answer;
-
-
-
-}
-
-
-catch(e){
-
-
-loading.innerHTML =
-"❌ "+e.message;
-
-
-}
-
-
-
-
-}
-
-
-
-
-
-
-
-
-
-async function callAI(text){
-
-
-
-let key =
-keyInput.value.trim();
-
-
-
-saveKey();
-
-
-
-if(!key)
-
-throw Error(
-"ยังไม่ได้ใส่ OpenRouter Key"
-);
-
-
-
-let model =
-document.getElementById("model")
-.value;
-
-
-
-
-
-// ป้องกันโมเดลเสียเงิน
-
-
-if(!model.endsWith(":free")){
-
-
-throw Error(
-"หยุด! โมเดลนี้ไม่ใช่ Free"
-);
-
-
-}
-
-
-
-
-
-
-
-let res =
-await fetch(
-
-"https://openrouter.ai/api/v1/chat/completions",
-
-{
-
-
-method:"POST",
-
-
-headers:{
-
-
-Authorization:
-`Bearer ${key}`,
-
-
-"Content-Type":
-"application/json"
-
-
-},
-
-
-
-body:JSON.stringify({
-
-
-model:model,
-
-
-max_tokens:512,
-
-
-temperature:0.7,
-
-
-messages:[
-
-{
-
-role:"user",
-
-content:text
-
-}
-
-]
-
-
-})
-
-
-}
-
-
-);
-
-
-
-
-
-let data =
-await res.json();
-
-
-
-
-
-console.log(data);
-
-
-
-
-if(data.error){
-
-
-throw Error(
-data.error.message
-);
-
-
-}
-
-
-
-
-
-
-return data
-.choices[0]
-.message
-.content;
-
-
-
-}
-
-
-
-
-
-</script>
-
+    <div class="container">
+        <h1>🤖 Safe Free AI Hub</h1>
+
+        <div class="panel">
+            <select id="model">
+                <option value="openrouter/free" selected>
+                    🤖 Auto Select Free Model
+                </option>
+            </select>
+            <br>
+            <input id="key" placeholder="OpenRouter API Key" style="width:80%">
+            <button onclick="checkKey()">🔍 เช็ก Key</button>
+        </div>
+
+        <div id="messages" class="messages"></div>
+
+        <div class="panel">
+            <input id="text" placeholder="พิมพ์ข้อความ..." style="width:70%" onkeypress="if(event.key==='Enter')send()">
+            <button onclick="send()">ส่ง</button>
+        </div>
+    </div>
+
+    <script>
+        const keyInput = document.getElementById("key");
+        keyInput.value = localStorage.getItem("or_key") || "";
+
+        function saveKey() {
+            localStorage.setItem("or_key", keyInput.value.trim());
+        }
+
+        async function checkKey() {
+            saveKey();
+            let key = keyInput.value.trim();
+            if (!key) {
+                alert("ใส่ Key ก่อน");
+                return;
+            }
+
+            let r = await fetch("https://openrouter.ai/api/v1/key", {
+                headers: {
+                    Authorization: `Bearer ${key}`
+                }
+            });
+            let d = await r.json();
+            alert(JSON.stringify(d, null, 2));
+        }
+
+        async function send() {
+            let text = document.getElementById("text").value.trim();
+            if (!text) return;
+
+            let box = document.getElementById("messages");
+            box.innerHTML += `
+                <div class="msg user">
+                    ${text}
+                </div>
+            `;
+            document.getElementById("text").value = "";
+
+            let loading = document.createElement("div");
+            loading.className = "msg ai";
+            loading.innerHTML = "กำลังคิด...";
+            box.appendChild(loading);
+
+            try {
+                let answer = await callAI(text);
+                loading.innerHTML = answer;
+            } catch (e) {
+                loading.innerHTML = "❌ " + e.message;
+            }
+        }
+
+        async function callAI(text) {
+            let key = keyInput.value.trim();
+            saveKey();
+
+            if (!key) throw Error("ยังไม่ได้ใส่ OpenRouter Key");
+
+            let model = document.getElementById("model").value;
+
+            // ตรวจสอบความปลอดภัย: ต้องเป็น "openrouter/free" หรือลงท้ายด้วย ":free" เท่านั้น
+            if (model !== "openrouter/free" && !model.endsWith(":free")) {
+                throw Error("หยุด! โมเดลนี้ไม่ใช่ Free");
+            }
+
+            let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${key}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: model,
+                    max_tokens: 512,
+                    temperature: 0.7,
+                    messages: [
+                        {
+                            role: "user",
+                            content: text
+                        }
+                    ]
+                })
+            });
+
+            let data = await res.json();
+            console.log(data);
+
+            if (data.error) {
+                throw Error(data.error.message);
+            }
+
+            return data.choices[0].message.content;
+        }
+    </script>
 
 </body>
-
-
 </html>

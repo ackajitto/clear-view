@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe Free AI Hub</title>
+    <title>Safe Free AI Hub (with Memory)</title>
 
     <style>
         body {
@@ -71,6 +71,11 @@
         .ai {
             background: #333;
         }
+        
+        .clear-btn {
+            background: #ff3333;
+            float: right;
+        }
     </style>
 </head>
 
@@ -88,6 +93,8 @@
             <br>
             <input id="key" placeholder="OpenRouter API Key" style="width:80%">
             <button onclick="checkKey()">🔍 เช็ก Key</button>
+            <!-- เพิ่มปุ่มลบความจำ -->
+            <button onclick="clearMemory()" class="clear-btn">🧹 ลบความจำ</button>
         </div>
 
         <div id="messages" class="messages"></div>
@@ -102,8 +109,18 @@
         const keyInput = document.getElementById("key");
         keyInput.value = localStorage.getItem("or_key") || "";
 
+        // 🧠 คลังความทรงจำ (Chat History) สำหรับเก็บประวัติการคุย
+        let chatHistory = [];
+
         function saveKey() {
             localStorage.setItem("or_key", keyInput.value.trim());
+        }
+
+        // ฟังก์ชันสำหรับล้างประวัติการคุย (ลบความจำ)
+        function clearMemory() {
+            chatHistory = [];
+            document.getElementById("messages").innerHTML = "";
+            alert("ลบความทรงจำและล้างหน้าจอเรียบร้อยครับ!");
         }
 
         async function checkKey() {
@@ -145,6 +162,8 @@
                 loading.innerHTML = answer;
             } catch (e) {
                 loading.innerHTML = "❌ " + e.message;
+                // ถ้าเออเรอร์ ให้ลบข้อความล่าสุดของผู้ใช้ออกซิครับ จะได้ไม่ค้างในประวัติแบบผิด ๆ
+                chatHistory.pop();
             }
         }
 
@@ -156,9 +175,16 @@
 
             let model = document.getElementById("model").value;
 
-            // ตรวจสอบความปลอดภัย: ต้องเป็น "openrouter/free" หรือลงท้ายด้วย ":free" เท่านั้น
             if (model !== "openrouter/free" && !model.endsWith(":free")) {
                 throw Error("หยุด! โมเดลนี้ไม่ใช่ Free");
+            }
+
+            // 1. บันทึกข้อความของผู้ใช้เข้าความทรงจำก่อนส่ง
+            chatHistory.push({ role: "user", content: text });
+
+            // 2. จำกัดความจำไม่ให้ยาวเกินไป (ป้องกัน Token เต็ม) เอาแค่ 20 ประโยคล่าสุดพอ
+            if (chatHistory.length > 20) {
+                chatHistory.shift(); // ลบอันเก่าสุดออก
             }
 
             let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -171,12 +197,7 @@
                     model: model,
                     max_tokens: 512,
                     temperature: 0.7,
-                    messages: [
-                        {
-                            role: "user",
-                            content: text
-                        }
-                    ]
+                    messages: chatHistory // 3. เปลี่ยนมาส่งประวัติการคุยทั้งหมดไปให้ AI อ่าน
                 })
             });
 
@@ -187,7 +208,12 @@
                 throw Error(data.error.message);
             }
 
-            return data.choices[0].message.content;
+            let aiAnswer = data.choices[0].message.content;
+
+            // 4. บันทึกคำตอบของ AI เข้าความทรงจำด้วย เพื่อใช้ในรอบถัดไป
+            chatHistory.push({ role: "assistant", content: aiAnswer });
+
+            return aiAnswer;
         }
     </script>
 

@@ -2,80 +2,103 @@
 <html lang="th">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Free AI Hub</title>
+<title>Safe Free AI Hub</title>
+
 
 <style>
 
 body{
-font-family:Arial,sans-serif;
-margin:0;
+
+font-family:Arial;
+background:#0b0b0b;
+color:white;
 padding:20px;
-background:#0a0a0a;
-color:#eee;
+
 }
+
 
 .container{
+
 max-width:900px;
 margin:auto;
+
 }
+
 
 h1{
+
 text-align:center;
-color:#00ff9d;
+color:#00ff99;
+
 }
 
-.controls{
 
-background:#1f1f1f;
+.panel{
+
+background:#1d1d1d;
 padding:15px;
-border-radius:12px;
-display:flex;
-flex-wrap:wrap;
-gap:10px;
+border-radius:15px;
 margin-bottom:15px;
 
 }
 
 
-select,input{
+select,input,button{
 
-padding:10px;
-background:#222;
-color:white;
+padding:12px;
+border-radius:10px;
 border:none;
-border-radius:8px;
+margin:5px;
 
 }
 
 
+input,select{
+
+background:#333;
+color:white;
+
+}
+
+
+button{
+
+background:#00cc77;
+color:white;
+cursor:pointer;
+
+}
+
+
+
 .messages{
 
-background:#171717;
+background:#151515;
+min-height:500px;
 padding:20px;
-border-radius:12px;
-min-height:60vh;
+border-radius:15px;
 overflow:auto;
 
 }
 
 
-.message{
+.msg{
 
-padding:14px;
-margin:10px 0;
+padding:12px;
+margin:10px;
 border-radius:12px;
-line-height:1.5;
 
 }
 
 
 .user{
 
-background:#007bff;
-margin-left:15%;
+background:#0066ff;
+margin-left:20%;
 
 }
 
@@ -87,46 +110,11 @@ background:#333;
 }
 
 
-.input-area{
-
-display:flex;
-gap:10px;
-margin-top:15px;
-
-}
-
-
-#main-input{
-
-flex:1;
-font-size:16px;
-
-}
-
-
-button{
-
-background:#00cc77;
-color:white;
-border:none;
-border-radius:12px;
-padding:0 25px;
-cursor:pointer;
-
-}
-
-
-button:hover{
-
-background:#00ff9d;
-color:black;
-
-}
-
 
 </style>
 
 </head>
+
 
 
 <body>
@@ -135,36 +123,38 @@ color:black;
 <div class="container">
 
 
-<h1>🤖 Free AI Hub</h1>
+<h1>
+🤖 Safe Free AI Hub
+</h1>
 
 
-<div class="controls">
+
+<div class="panel">
 
 
 <select id="model">
 
-<option value="groq">
-⚡ Groq Llama 3.3
-</option>
 
+<option value="deepseek/deepseek-chat-v3:free">
 
-<option value="gemini">
-✨ Gemini API
-</option>
-
-
-<option value="deepseek" selected>
 🧠 DeepSeek V3 Free
+
 </option>
 
 
-<option value="qwen">
+
+<option value="qwen/qwen3:free">
+
 🐼 Qwen3 Free
+
 </option>
 
 
-<option value="openrouter-gemini">
-🌟 Gemini 2.5 Flash Free
+
+<option value="google/gemini-2.5-flash:free">
+
+✨ Gemini Free
+
 </option>
 
 
@@ -172,19 +162,22 @@ color:black;
 
 
 
-<input 
-id="groq-key"
-placeholder="Groq API Key">
+<br>
 
 
 <input 
-id="gemini-key"
-placeholder="Gemini API Key">
+id="key"
+placeholder="OpenRouter API Key"
+style="width:80%">
 
 
-<input 
-id="openrouter-key"
-placeholder="OpenRouter API Key">
+
+<button onclick="checkKey()">
+
+🔍 เช็ก Key
+
+</button>
+
 
 
 </div>
@@ -192,29 +185,41 @@ placeholder="OpenRouter API Key">
 
 
 
-<div id="messages" class="messages"></div>
+
+<div id="messages"
+class="messages">
+
+</div>
 
 
 
 
-<div class="input-area">
+<div class="panel">
 
 
 <input 
-id="main-input"
+id="text"
 placeholder="พิมพ์ข้อความ..."
-onkeypress="if(event.key==='Enter') sendMessage()">
+style="width:70%"
+onkeypress="if(event.key==='Enter')send()">
 
 
-<button onclick="sendMessage()">
+
+<button onclick="send()">
+
 ส่ง
+
 </button>
 
 
 </div>
 
 
+
+
 </div>
+
+
 
 
 
@@ -222,65 +227,101 @@ onkeypress="if(event.key==='Enter') sendMessage()">
 <script>
 
 
-// โหลด Key
+
+const keyInput =
+document.getElementById("key");
 
 
-function loadKeys(){
 
-groq-key.value =
-localStorage.getItem("groq_key") || "";
-
-
-gemini-key.value =
-localStorage.getItem("gemini_key") || "";
+keyInput.value =
+localStorage.getItem("or_key") || "";
 
 
-openrouter-key.value =
-localStorage.getItem("openrouter_key") || "";
+
+
+
+function saveKey(){
+
+localStorage.setItem(
+"or_key",
+keyInput.value.trim()
+);
 
 }
 
 
-function saveKeys(){
 
-localStorage.setItem(
-"groq_key",
-groq-key.value.trim()
+
+
+
+async function checkKey(){
+
+
+saveKey();
+
+
+let key=keyInput.value.trim();
+
+
+if(!key){
+
+alert("ใส่ Key ก่อน");
+
+return;
+
+}
+
+
+
+
+let r =
+await fetch(
+"https://openrouter.ai/api/v1/key",
+{
+
+headers:{
+
+Authorization:
+`Bearer ${key}`
+
+}
+
+}
+
 );
 
 
-localStorage.setItem(
-"gemini_key",
-gemini-key.value.trim()
-);
+let d =
+await r.json();
 
 
-localStorage.setItem(
-"openrouter_key",
-openrouter-key.value.trim()
+alert(
+JSON.stringify(d,null,2)
 );
 
 
 }
 
 
-loadKeys();
 
 
 
 
 
-async function sendMessage(){
 
 
-let input =
-document.getElementById("main-input");
+async function send(){
 
 
-let text=input.value.trim();
+
+let text =
+document.getElementById("text")
+.value.trim();
+
 
 
 if(!text)return;
+
 
 
 let box =
@@ -289,117 +330,58 @@ document.getElementById("messages");
 
 
 box.innerHTML +=
+
 `
-<div class="message user">
+<div class="msg user">
 ${text}
 </div>
 `;
 
 
 
-input.value="";
+document.getElementById("text")
+.value="";
 
 
 
-let id="load"+Date.now();
 
 
-box.innerHTML +=
-`
-<div class="message ai" id="${id}">
-กำลังคิด...
-</div>
-`;
+let loading =
+document.createElement("div");
 
 
+loading.className="msg ai";
 
-let model =
-document.getElementById("model").value;
+loading.innerHTML="กำลังคิด...";
 
 
+box.appendChild(loading);
 
-let answer="";
+
 
 
 
 try{
 
 
-if(model==="groq"){
-
-answer=
-await callGroq(text);
-
-}
+let answer =
+await callAI(text);
 
 
 
-else if(model==="gemini"){
-
-answer=
-await callGemini(text);
-
-}
-
-
-
-else if(model==="deepseek"){
-
-
-answer=
-await callOpenRouter(
-text,
-"deepseek/deepseek-chat-v3:free"
-);
-
-
-}
-
-
-
-else if(model==="qwen"){
-
-
-answer=
-await callOpenRouter(
-text,
-"qwen/qwen3:free"
-);
-
-
-}
-
-
-
-else{
-
-
-answer=
-await callOpenRouter(
-text,
-"google/gemini-2.5-flash:free"
-);
-
-
-}
+loading.innerHTML =
+answer;
 
 
 
 }
+
 
 catch(e){
 
-answer="❌ "+e.message;
 
-}
-
-
-
-document.getElementById(id)
-.innerHTML=answer;
-
-
-saveKeys();
+loading.innerHTML =
+"❌ "+e.message;
 
 
 }
@@ -407,134 +389,54 @@ saveKeys();
 
 
 
-
-// GROQ
-
-
-async function callGroq(text){
+}
 
 
-let key=
-groq-key.value.trim();
+
+
+
+
+
+
+
+async function callAI(text){
+
+
+
+let key =
+keyInput.value.trim();
+
+
+
+saveKey();
+
 
 
 if(!key)
-key=prompt("Groq API Key");
 
-
-let res=
-await fetch(
-"https://api.groq.com/openai/v1/chat/completions",
-{
-
-
-method:"POST",
-
-
-headers:{
-
-Authorization:`Bearer ${key}`,
-"Content-Type":"application/json"
-
-},
-
-
-body:JSON.stringify({
-
-model:"llama3-70b-8192",
-
-messages:[
-{
-role:"user",
-content:text
-}
-
-]
-
-})
-
-
-});
-
-
-let data=await res.json();
-
-
-return data.choices[0].message.content;
-
-
-}
-
-
-
-
-
-
-
-// GEMINI
-
-
-async function callGemini(text){
-
-
-let key=
-gemini-key.value.trim();
-
-
-if(!key)
-key=prompt("Gemini API Key");
-
-
-
-let res=
-await fetch(
-
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-
-{
-
-
-method:"POST",
-
-headers:{
-
-"Content-Type":"application/json"
-
-},
-
-
-body:JSON.stringify({
-
-contents:[
-
-{
-parts:[
-{
-text:text
-}
-]
-
-}
-
-]
-
-
-})
-
-
-}
-
-
+throw Error(
+"ยังไม่ได้ใส่ OpenRouter Key"
 );
 
 
 
-let data=await res.json();
+let model =
+document.getElementById("model")
+.value;
 
 
 
-return data.candidates[0]
-.content.parts[0].text;
+
+
+// ป้องกันโมเดลเสียเงิน
+
+
+if(!model.endsWith(":free")){
+
+
+throw Error(
+"หยุด! โมเดลนี้ไม่ใช่ Free"
+);
 
 
 }
@@ -545,26 +447,7 @@ return data.candidates[0]
 
 
 
-
-// OPENROUTER
-
-
-async function callOpenRouter(text,model){
-
-
-
-let key=
-openrouter-key.value.trim();
-
-
-
-if(!key)
-key=prompt("OpenRouter API Key");
-
-
-
-
-let res=
+let res =
 await fetch(
 
 "https://openrouter.ai/api/v1/chat/completions",
@@ -583,11 +466,7 @@ Authorization:
 
 
 "Content-Type":
-"application/json",
-
-
-"HTTP-Referer":
-window.location.href
+"application/json"
 
 
 },
@@ -598,6 +477,12 @@ body:JSON.stringify({
 
 
 model:model,
+
+
+max_tokens:512,
+
+
+temperature:0.7,
 
 
 messages:[
@@ -616,7 +501,6 @@ content:text
 })
 
 
-
 }
 
 
@@ -624,32 +508,52 @@ content:text
 
 
 
-let data=
+
+
+let data =
 await res.json();
 
 
 
-if(data.error)
 
-throw new Error(
+
+console.log(data);
+
+
+
+
+if(data.error){
+
+
+throw Error(
 data.error.message
 );
 
 
+}
 
-return data.choices[0]
-.message.content;
+
+
+
+
+
+return data
+.choices[0]
+.message
+.content;
 
 
 
 }
+
+
 
 
 
 </script>
 
 
-
 </body>
+
 
 </html>

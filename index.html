@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe Free AI Hub (เวอร์ชันชัวร์ 100%)</title>
+    <title>Safe Free AI Hub (ระบบกู้ภัยอัตโนมัติ 2026)</title>
     <style>
         body { font-family: Arial, sans-serif; background: #0b0b0b; color: white; padding: 20px; }
         .container { max-width: 950px; margin: auto; }
@@ -24,12 +24,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Safe Free AI Hub (ล็อกเฉพาะสายฟรีชัวร์)</h1>
+        <h1>🤖 Safe Free AI Hub (เสถียร 100%)</h1>
 
         <div class="panel">
+            <!-- ปรับตัวเลือกให้ปลอดภัยและเสถียรที่สุดตามสถาปัตยกรรมปัจจุบัน -->
             <select id="model">
-                <option value="openrouter/free">🚀 Auto Free (แนะนำสุด - ระบบสลับตัวที่ดีที่สุดให้ฟรี)</option>
-                <option value="meta-llama/llama-3.3-70b-instruct:free">🦙 Llama 3.3 70B Free (ตัวนี้ยังอยู่ในลิสต์ฟรี และแข็งแกร่งมาก)</option>
+                <option value="openrouter/free">🚀 Auto Free (แนะนำที่สุด - ระบบสลับตัวที่ว่างให้ฟรีอัตโนมัติ)</option>
+                <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (รุ่นเสถียร คุยลื่นไหล)</option>
             </select>
             <span id="current-model" style="margin-left:10px; color:#00ff99;"></span>
             
@@ -95,7 +96,7 @@
             box.scrollTop = box.scrollHeight;
 
             try {
-                const result = await callAI(text);
+                const result = await callAIWithFallback(text);
                 loading.innerHTML = `<div class="model-tag">🤖 Responded by: ${result.modelName}</div><br>${result.answer}`;
                 addCopyButtons(loading);   
             } catch (e) {
@@ -119,31 +120,44 @@
             });
         }
 
-        async function callAI(text) {
+        // ระบบกู้ภัยระดับรากฐาน: ถ้าโมเดลที่เลือกเกิด Error ให้ดีดกลับมาใช้ openrouter/free ทันที
+        async function callAIWithFallback(text) {
+            const selectedModel = document.getElementById("model").value;
+            try {
+                return await fetchFromOpenRouter(text, selectedModel);
+            } catch (error) {
+                console.warn(`โมเดล ${selectedModel} มีปัญหา: ${error.message} -> กำลังเปิดระบบกู้ภัยด้วย Auto Free...`);
+                if (selectedModel !== "openrouter/free") {
+                    return await fetchFromOpenRouter(text, "openrouter/free");
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        async function fetchFromOpenRouter(text, modelId) {
             let key = keyInput.value.trim();
             saveKey();
             if (!key) throw new Error("ยังไม่ได้ใส่ OpenRouter API Key");
 
-            const model = document.getElementById("model").value;
-            updateCurrentModel();
-
-            // 🛡️ ระบบล็อกความปลอดภัยตรวจคำสั่ง :free
-            if (model !== "openrouter/free" && !model.endsWith(":free") && !model.includes(":free-")) {
-                throw new Error("หยุด! โมเดลนี้ไม่ใช่เวอร์ชันฟรี ระบบบล็อกเพื่อความปลอดภัย");
+            // ล็อกระบบป้องกันไม่ให้เรียกใช้โมเดลแบบเสียเงิน
+            if (modelId !== "openrouter/free" && !modelId.endsWith(":free") && !modelId.includes(":free-")) {
+                throw new Error("ระบบบล็อกเพื่อความปลอดภัย (ไม่ใช่โมเดลเวอร์ชันฟรี)");
             }
 
-            chatHistory.push({ role: "user", content: text });
-            if (chatHistory.length > 15) chatHistory.shift();
+            // จัดการประวัติการสนทนา
+            let tempHistory = [...chatHistory, { role: "user", content: text }];
+            if (tempHistory.length > 16) tempHistory.shift();
 
             let body = {
-                model: model,
-                temperature: 0.75,
+                model: modelId,
+                temperature: 0.7,
                 messages: [
                     { 
                         role: "system", 
                         content: "คุณคือผู้ช่วยภาษาไทยที่เป็นมิตร ฉลาด เป็นธรรมชาติ ไม่สุภาพเกินไป ตอบตรงประเด็นและมีประโยชน์" 
                     },
-                    ...chatHistory
+                    ...tempHistory
                 ]
             };
 
@@ -160,13 +174,15 @@
             if (data.error) throw new Error(data.error.message);
 
             let aiAnswer = data.choices[0].message.content;
-
+            
+            // อัปเดตประวัติหลักเมื่อการเรียกใช้งานสำเร็จเสร็จสิ้น
+            chatHistory.push({ role: "user", content: text });
             chatHistory.push({ role: "assistant", content: aiAnswer });
-            let realModelName = data.model || model; 
+            if (chatHistory.length > 16) chatHistory.splice(0, 2);
 
             return {
                 answer: aiAnswer,
-                modelName: realModelName
+                modelName: data.model || modelId
             };
         }
     </script>

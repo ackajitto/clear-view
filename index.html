@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe Free AI Hub (อัพเดท + แสดงชื่อโมเดล)</title>
+    <title>Safe Free AI Hub (อัพเดทคลังโมเดลฟรี 2026)</title>
     <style>
         body { font-family: Arial, sans-serif; background: #0b0b0b; color: white; padding: 20px; }
         .container { max-width: 950px; margin: auto; }
@@ -17,7 +17,6 @@
         .msg { padding: 14px; margin: 10px 0; border-radius: 12px; line-height: 1.5; }
         .user { background: #0066ff; margin-left: 15%; }
         .ai { background: #333; }
-        /* สไตล์สำหรับป้ายชื่อโมเดลที่ตอบ */
         .model-tag { font-size: 11px; color: #00ff99; background: #222; padding: 3px 8px; border-radius: 5px; display: inline-block; margin-bottom: 8px; font-weight: bold; border: 1px solid #333; }
         .copy-btn { background: #444; padding: 5px 10px; font-size: 12px; margin-top: 8px; color: white; border-radius: 5px; cursor: pointer; }
         .clear-btn { background: #ff3333; float: right; }
@@ -25,14 +24,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Safe Free AI Hub (อัพเดท)</h1>
+        <h1>🤖 Safe Free AI Hub (อัพเดทคลังโมเดลฟรี 2026)</h1>
 
         <div class="panel">
+            <!-- ⚡ อัพเดทตัวเลือกโมเดลฟรีที่คัดมาจากหน้าจอของคุณโดยเฉพาะ -->
             <select id="model">
-                <option value="openrouter/free">Auto Free (เร็ว)</option>
-                <option value="deepseek/deepseek-r1:free">DeepSeek R1 (ฉลาด Reasoning)</option>
-                <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B (ดีมาก)</option>
-                <option value="black-forest-labs/flux.2-pro">FLUX.2 Pro (สร้างรูปภาพ)</option>
+                <option value="openrouter/free">Auto Free (เร็ว - สลับอัตโนมัติ)</option>
+                <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen3 Next 80B (ฟรี - เก่งภาษาไทยมาก)</option>
+                <option value="qwen/qwen3-coder-480b-a35b:free">Qwen3 Coder 480B (ฟรี - ตัวพ่อด้านเขียนโค้ด)</option>
+                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (ฟรี - ฉลาดมาตรฐานสากล)</option>
+                <option value="google/gemma-4-31b:free">Gemma 4 31B (ฟรี - ค่าย Google รุ่นล่าสุด)</option>
+                <option value="nex/nex-n2-pro:free">Nex-N2-Pro (ฟรี - ตัวทดลองใหม่)</option>
             </select>
             <span id="current-model" style="margin-left:10px; color:#00ff99;"></span>
             
@@ -45,7 +47,7 @@
         <div id="messages" class="messages"></div>
 
         <div class="panel">
-            <input id="text" placeholder="พิมพ์ข้อความ... (เช่น: สร้างรูปแมวใส่แว่นกันแดด)" 
+            <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI..." 
                    style="width:75%" onkeypress="if(event.key==='Enter') send()">
             <button onclick="send()">ส่ง</button>
         </div>
@@ -98,10 +100,7 @@
             box.scrollTop = box.scrollHeight;
 
             try {
-                // รับค่า Object คืนมาจาก callAI() แทนที่จะเป็นข้อความเปล่า ๆ
                 const result = await callAI(text);
-                
-                // นำชื่อโมเดลจริงมาสร้างป้ายแปะไว้บนหัวข้อความตอบกลับ
                 loading.innerHTML = `<div class="model-tag">🤖 Responded by: ${result.modelName}</div><br>${result.answer}`;
                 addCopyButtons(loading);   
             } catch (e) {
@@ -113,7 +112,7 @@
         function addCopyButtons(element) {
             const codeBlocks = element.querySelectorAll("pre, code");
             codeBlocks.forEach(block => {
-                const btn = document.createElement("button"); // แก้ไข: ลบการประกาศซ้ำออกเรียบร้อยแล้ว
+                const btn = document.createElement("button"); // แก้ไขปัญหาตัวแปรซ้ำเรียบร้อย
                 btn.className = "copy-btn";
                 btn.textContent = "📋 ก๊อปปี้โค้ด";
                 btn.onclick = () => {
@@ -133,10 +132,13 @@
             const model = document.getElementById("model").value;
             updateCurrentModel();
 
-            const isImageRequest = /สร้างรูป|generate image|draw|ภาพ|รูป|flux/i.test(text);
+            // 🛡️ กำแพงป้องกันชั้นที่ 1: ตรวจความปลอดภัยว่าต้องเป็นโมเดลฟรีชัวร์ๆ เท่านั้นถึงจะปล่อยผ่าน
+            if (model !== "openrouter/free" && !model.endsWith(":free") && !model.includes(":free-")) {
+                throw new Error("หยุด! โมเดลนี้ไม่ใช่เวอร์ชันฟรี ระบบบล็อกเพื่อความปลอดภัยของกระเป๋าเงินคุณ");
+            }
 
             chatHistory.push({ role: "user", content: text });
-            if (chatHistory.length > 15) chatHistory.shift();
+            if (chatHistory.length > 15) chatHistory.shift(); // จำกัดความยาวคุยไม่ให้บวมเกินไป
 
             let body = {
                 model: model,
@@ -149,11 +151,6 @@
                     ...chatHistory
                 ]
             };
-
-            if (isImageRequest && model.includes("flux")) {
-                body.modalities = ["image"];
-                body.messages = [{ role: "user", content: text }];
-            }
 
             const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -169,18 +166,9 @@
 
             let aiAnswer = data.choices[0].message.content;
 
-            if (data.choices[0].message.images && data.choices[0].message.images.length > 0) {
-                const imgUrl = data.choices[0].message.images[0].url || 
-                              "data:image/png;base64," + data.choices[0].message.images[0].image;
-                aiAnswer = `<img src="${imgUrl}" style="max-width:100%; border-radius:10px;"><br><small>รูปที่สร้างจาก FLUX</small>`;
-            }
-
             chatHistory.push({ role: "assistant", content: aiAnswer });
-            
-            //ดึงชื่อโมเดลจริงที่ OpenRouter เลือกให้ในรอบนั้นออกมาจากเดต้า
             let realModelName = data.model || model; 
 
-            // ส่งข้อมูลกลับไปแบบ Object เพื่อเอาทั้งคำตอบและชื่อโมเดลไปใช้งาน
             return {
                 answer: aiAnswer,
                 modelName: realModelName

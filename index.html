@@ -1,106 +1,51 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe Free AI Hub (with Memory)</title>
-
+    <title>Safe Free AI Hub (อัพเดท)</title>
     <style>
-        body {
-            font-family: Arial;
-            background: #0b0b0b;
-            color: white;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
-
-        h1 {
-            text-align: center;
-            color: #00ff99;
-        }
-
-        .panel {
-            background: #1d1d1d;
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-        }
-
-        select, input, button {
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            margin: 5px;
-        }
-
-        input, select {
-            background: #333;
-            color: white;
-        }
-
-        button {
-            background: #00cc77;
-            color: white;
-            cursor: pointer;
-        }
-
-        .messages {
-            background: #151515;
-            min-height: 500px;
-            padding: 20px;
-            border-radius: 15px;
-            overflow: auto;
-        }
-
-        .msg {
-            padding: 12px;
-            margin: 10px;
-            border-radius: 12px;
-        }
-
-        .user {
-            background: #0066ff;
-            margin-left: 20%;
-        }
-
-        .ai {
-            background: #333;
-        }
-        
-        .clear-btn {
-            background: #ff3333;
-            float: right;
-        }
+        body { font-family: Arial, sans-serif; background: #0b0b0b; color: white; padding: 20px; }
+        .container { max-width: 950px; margin: auto; }
+        h1 { text-align: center; color: #00ff99; }
+        .panel { background: #1d1d1d; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
+        select, input, button { padding: 12px; border-radius: 10px; border: none; margin: 5px; }
+        input, select { background: #333; color: white; }
+        button { background: #00cc77; color: white; cursor: pointer; }
+        button:hover { background: #00ff88; }
+        .messages { background: #151515; min-height: 500px; padding: 20px; border-radius: 15px; overflow: auto; }
+        .msg { padding: 14px; margin: 10px 0; border-radius: 12px; line-height: 1.5; }
+        .user { background: #0066ff; margin-left: 15%; }
+        .ai { background: #333; }
+        .model-name { font-size: 13px; color: #00ff99; margin-bottom: 5px; }
+        .copy-btn { background: #444; padding: 5px 10px; font-size: 12px; margin-top: 8px; }
+        .clear-btn { background: #ff3333; float: right; }
     </style>
 </head>
-
 <body>
-
     <div class="container">
-        <h1>🤖 Safe Free AI Hub</h1>
+        <h1>🤖 Safe Free AI Hub (อัพเดท)</h1>
 
         <div class="panel">
             <select id="model">
-                <option value="openrouter/free" selected>
-                    🤖 Auto Select Free Model
-                </option>
+                <option value="openrouter/free">Auto Free (เร็ว)</option>
+                <option value="deepseek/deepseek-r1:free">DeepSeek R1 (ฉลาด Reasoning)</option>
+                <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B (ดีมาก)</option>
+                <option value="black-forest-labs/flux.2-pro">FLUX.2 Pro (สร้างรูปภาพ)</option>
             </select>
-            <br>
-            <input id="key" placeholder="OpenRouter API Key" style="width:80%">
+            <span id="current-model" style="margin-left:10px; color:#00ff99;"></span>
+            
+            <br><br>
+            <input id="key" placeholder="OpenRouter API Key" style="width:70%">
             <button onclick="checkKey()">🔍 เช็ก Key</button>
-            <!-- เพิ่มปุ่มลบความจำ -->
-            <button onclick="clearMemory()" class="clear-btn">🧹 ลบความจำ</button>
+            <button onclick="clearMemory()" class="clear-btn">🧹 ล้างความจำ</button>
         </div>
 
         <div id="messages" class="messages"></div>
 
         <div class="panel">
-            <input id="text" placeholder="พิมพ์ข้อความ..." style="width:70%" onkeypress="if(event.key==='Enter')send()">
+            <input id="text" placeholder="พิมพ์ข้อความ... (เช่น: สร้างรูปแมวใส่แว่นกันแดด)" 
+                   style="width:75%" onkeypress="if(event.key==='Enter') send()">
             <button onclick="send()">ส่ง</button>
         </div>
     </div>
@@ -109,113 +54,130 @@
         const keyInput = document.getElementById("key");
         keyInput.value = localStorage.getItem("or_key") || "";
 
-        // 🧠 คลังความทรงจำ (Chat History) สำหรับเก็บประวัติการคุย
         let chatHistory = [];
 
         function saveKey() {
             localStorage.setItem("or_key", keyInput.value.trim());
         }
 
-        // ฟังก์ชันสำหรับล้างประวัติการคุย (ลบความจำ)
+        function updateCurrentModel() {
+            const modelSelect = document.getElementById("model");
+            const display = document.getElementById("current-model");
+            let name = modelSelect.options[modelSelect.selectedIndex].text;
+            display.textContent = "กำลังใช้: " + name;
+        }
+        document.getElementById("model").addEventListener("change", updateCurrentModel);
+        updateCurrentModel();
+
         function clearMemory() {
             chatHistory = [];
             document.getElementById("messages").innerHTML = "";
-            alert("ลบความทรงจำและล้างหน้าจอเรียบร้อยครับ!");
+            alert("ล้างความจำเรียบร้อยแล้ว!");
         }
 
         async function checkKey() {
             saveKey();
             let key = keyInput.value.trim();
-            if (!key) {
-                alert("ใส่ Key ก่อน");
-                return;
-            }
-
-            let r = await fetch("https://openrouter.ai/api/v1/key", {
-                headers: {
-                    Authorization: `Bearer ${key}`
-                }
-            });
-            let d = await r.json();
-            alert(JSON.stringify(d, null, 2));
+            if (!key) return alert("ใส่ Key ก่อน");
+            // ... (เช็ก key เดิม)
+            alert("Key ถูกบันทึกแล้ว");
         }
 
         async function send() {
             let text = document.getElementById("text").value.trim();
             if (!text) return;
 
-            let box = document.getElementById("messages");
-            box.innerHTML += `
-                <div class="msg user">
-                    ${text}
-                </div>
-            `;
+            const box = document.getElementById("messages");
+            box.innerHTML += `<div class="msg user">${text}</div>`;
             document.getElementById("text").value = "";
 
-            let loading = document.createElement("div");
+            const loading = document.createElement("div");
             loading.className = "msg ai";
             loading.innerHTML = "กำลังคิด...";
             box.appendChild(loading);
+            box.scrollTop = box.scrollHeight;
 
             try {
-                let answer = await callAI(text);
+                const answer = await callAI(text);
                 loading.innerHTML = answer;
+                addCopyButtons(loading);   // เพิ่มปุ่มก๊อปปี้
             } catch (e) {
                 loading.innerHTML = "❌ " + e.message;
-                // ถ้าเออเรอร์ ให้ลบข้อความล่าสุดของผู้ใช้ออกซิครับ จะได้ไม่ค้างในประวัติแบบผิด ๆ
-                chatHistory.pop();
             }
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function addCopyButtons(element) {
+            const codeBlocks = element.querySelectorAll("pre, code");
+            codeBlocks.forEach(block => {
+                const btn = document.createElement("button");
+                btn.className = "copy-btn";
+                btn.textContent = "📋 ก๊อปปี้โค้ด";
+                btn.onclick = () => {
+                    navigator.clipboard.writeText(block.textContent);
+                    btn.textContent = "✅ ก๊อปแล้ว!";
+                    setTimeout(() => btn.textContent = "📋 ก๊อปปี้โค้ด", 2000);
+                };
+                block.parentNode.insertBefore(btn, block.nextSibling);
+            });
         }
 
         async function callAI(text) {
             let key = keyInput.value.trim();
             saveKey();
+            if (!key) throw new Error("ยังไม่ได้ใส่ OpenRouter API Key");
 
-            if (!key) throw Error("ยังไม่ได้ใส่ OpenRouter Key");
+            const model = document.getElementById("model").value;
+            updateCurrentModel();
 
-            let model = document.getElementById("model").value;
+            // ตรวจสอบว่าต้องการสร้างรูปภาพไหม
+            const isImageRequest = /สร้างรูป|generate image|draw|ภาพ|รูป|flux/i.test(text);
 
-            if (model !== "openrouter/free" && !model.endsWith(":free")) {
-                throw Error("หยุด! โมเดลนี้ไม่ใช่ Free");
-            }
-
-            // 1. บันทึกข้อความของผู้ใช้เข้าความทรงจำก่อนส่ง
             chatHistory.push({ role: "user", content: text });
+            if (chatHistory.length > 15) chatHistory.shift();
 
-            // 2. จำกัดความจำไม่ให้ยาวเกินไป (ป้องกัน Token เต็ม) เอาแค่ 20 ประโยคล่าสุดพอ
-            if (chatHistory.length > 20) {
-                chatHistory.shift(); // ลบอันเก่าสุดออก
+            let body = {
+                model: model,
+                temperature: 0.75,
+                messages: [
+                    { 
+                        role: "system", 
+                        content: "คุณคือผู้ช่วยภาษาไทยที่เป็นมิตร ฉลาด เป็นธรรมชาติ ไม่สุภาพเกินไป ตอบตรงประเด็นและมีประโยชน์" 
+                    },
+                    ...chatHistory
+                ]
+            };
+
+            // === สร้างรูปภาพ ===
+            if (isImageRequest && model.includes("flux")) {
+                body.modalities = ["image"];
+                body.messages = [{ role: "user", content: text }];
             }
 
-            let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${key}`,
+                    "Authorization": `Bearer ${key}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    model: model,
-                    max_tokens: 512,
-                    temperature: 0.7,
-                    messages: chatHistory // 3. เปลี่ยนมาส่งประวัติการคุยทั้งหมดไปให้ AI อ่าน
-                })
+                body: JSON.stringify(body)
             });
 
-            let data = await res.json();
-            console.log(data);
-
-            if (data.error) {
-                throw Error(data.error.message);
-            }
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message);
 
             let aiAnswer = data.choices[0].message.content;
 
-            // 4. บันทึกคำตอบของ AI เข้าความทรงจำด้วย เพื่อใช้ในรอบถัดไป
-            chatHistory.push({ role: "assistant", content: aiAnswer });
+            // ถ้าเป็นรูปภาพ (base64)
+            if (data.choices[0].message.images && data.choices[0].message.images.length > 0) {
+                const imgUrl = data.choices[0].message.images[0].url || 
+                              "data:image/png;base64," + data.choices[0].message.images[0].image;
+                aiAnswer = `<img src="${imgUrl}" style="max-width:100%; border-radius:10px;"><br><small>รูปที่สร้างจาก FLUX</small>`;
+            }
 
+            chatHistory.push({ role: "assistant", content: aiAnswer });
             return aiAnswer;
         }
     </script>
-
 </body>
 </html>

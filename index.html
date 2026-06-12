@@ -113,8 +113,7 @@
         function addCopyButtons(element) {
             const codeBlocks = element.querySelectorAll("pre, code");
             codeBlocks.forEach(block => {
-                const btn = document.createElement("button");
-                const btn = document.createElement("button");
+                const btn = document.createElement("button"); // แก้ไข: ลบการประกาศซ้ำออกเรียบร้อยแล้ว
                 btn.className = "copy-btn";
                 btn.textContent = "📋 ก๊อปปี้โค้ด";
                 btn.onclick = () => {
@@ -179,7 +178,7 @@
             chatHistory.push({ role: "assistant", content: aiAnswer });
             
             //ดึงชื่อโมเดลจริงที่ OpenRouter เลือกให้ในรอบนั้นออกมาจากเดต้า
-            let realModelName = data.model; 
+            let realModelName = data.model || model; 
 
             // ส่งข้อมูลกลับไปแบบ Object เพื่อเอาทั้งคำตอบและชื่อโมเดลไปใช้งาน
             return {

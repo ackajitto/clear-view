@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe Free AI Hub (อัพเดทคลังโมเดลฟรี 2026)</title>
+    <title>Safe Free AI Hub (แก้ไขรหัส ID โมเดล)</title>
     <style>
         body { font-family: Arial, sans-serif; background: #0b0b0b; color: white; padding: 20px; }
         .container { max-width: 950px; margin: auto; }
@@ -24,17 +24,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Safe Free AI Hub (อัพเดทคลังโมเดลฟรี 2026)</h1>
+        <h1>🤖 Safe Free AI Hub (แก้ไขรหัส ID)</h1>
 
         <div class="panel">
-            <!-- ⚡ อัพเดทตัวเลือกโมเดลฟรีที่คัดมาจากหน้าจอของคุณโดยเฉพาะ -->
+            <!-- ⚡ ปรับเป็นรหัสหลังบ้าน (Model ID) ที่แท้จริงของ OpenRouter เรียบร้อยครับ -->
             <select id="model">
-                <option value="openrouter/free">Auto Free (เร็ว - สลับอัตโนมัติ)</option>
-                <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen3 Next 80B (ฟรี - เก่งภาษาไทยมาก)</option>
-                <option value="qwen/qwen3-coder-480b-a35b:free">Qwen3 Coder 480B (ฟรี - ตัวพ่อด้านเขียนโค้ด)</option>
-                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (ฟรี - ฉลาดมาตรฐานสากล)</option>
-                <option value="google/gemma-4-31b:free">Gemma 4 31B (ฟรี - ค่าย Google รุ่นล่าสุด)</option>
-                <option value="nex/nex-n2-pro:free">Nex-N2-Pro (ฟรี - ตัวทดลองใหม่)</option>
+                <option value="openrouter/free">Auto Free (แนะนำ 🚀 ระบบเลือกตัวที่ดีที่สุดให้ฟรี)</option>
+                <option value="qwen/qwen-2.5-coder-32b-instruct:free">Qwen 2.5 Coder (ฟรี - เก่งเขียนโค้ด/แก้บั๊กมาก)</option>
+                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (ฟรี - ฉลาด รอบรู้ ตอบดี)</option>
+                <option value="google/gemma-2-27b-it:free">Gemma 2 27B (ฟรี - ค่าย Google อรรถประโยชน์สูง)</option>
             </select>
             <span id="current-model" style="margin-left:10px; color:#00ff99;"></span>
             
@@ -112,7 +110,7 @@
         function addCopyButtons(element) {
             const codeBlocks = element.querySelectorAll("pre, code");
             codeBlocks.forEach(block => {
-                const btn = document.createElement("button"); // แก้ไขปัญหาตัวแปรซ้ำเรียบร้อย
+                const btn = document.createElement("button");
                 btn.className = "copy-btn";
                 btn.textContent = "📋 ก๊อปปี้โค้ด";
                 btn.onclick = () => {
@@ -132,13 +130,13 @@
             const model = document.getElementById("model").value;
             updateCurrentModel();
 
-            // 🛡️ กำแพงป้องกันชั้นที่ 1: ตรวจความปลอดภัยว่าต้องเป็นโมเดลฟรีชัวร์ๆ เท่านั้นถึงจะปล่อยผ่าน
+            // 🛡️ ระบบล็อกความปลอดภัยตรวจคำสั่ง :free
             if (model !== "openrouter/free" && !model.endsWith(":free") && !model.includes(":free-")) {
-                throw new Error("หยุด! โมเดลนี้ไม่ใช่เวอร์ชันฟรี ระบบบล็อกเพื่อความปลอดภัยของกระเป๋าเงินคุณ");
+                throw new Error("หยุด! โมเดลนี้ไม่ใช่เวอร์ชันฟรี ระบบบล็อกเพื่อความปลอดภัย");
             }
 
             chatHistory.push({ role: "user", content: text });
-            if (chatHistory.length > 15) chatHistory.shift(); // จำกัดความยาวคุยไม่ให้บวมเกินไป
+            if (chatHistory.length > 15) chatHistory.shift();
 
             let body = {
                 model: model,

@@ -2,76 +2,108 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe Free AI Hub (Markdown & Code Highlight Pro)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Safe Free AI Hub (Mobile Pro)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 
     <style>
-        body { font-family: Arial, sans-serif; background: #0b0b0b; color: white; padding: 20px; margin: 0; }
-        .container { max-width: 950px; margin: auto; padding: 10px; }
-        h1 { text-align: center; color: #00ff99; font-size: 24px; }
-        .panel { background: #1d1d1d; padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #2a2a2a; }
-        select, input, button { padding: 12px; border-radius: 10px; border: none; margin: 5px; font-size: 14px; }
-        input, select { background: #333; color: white; box-sizing: border-box; }
-        button { background: #00cc77; color: white; cursor: pointer; font-weight: bold; }
-        button:hover { background: #00ff88; }
-        .messages { background: #151515; min-height: 500px; max-height: 70vh; padding: 20px; border-radius: 15px; overflow-y: auto; border: 1px solid #222; }
-        .msg { padding: 14px; margin: 12px 0; border-radius: 12px; line-height: 1.6; word-wrap: break-word; }
-        .user { background: #0066ff; margin-left: 15%; border-bottom-right-radius: 2px; }
-        .ai { background: #232323; margin-right: 15%; border-bottom-left-radius: 2px; border: 1px solid #333; }
-        .model-tag { font-size: 11px; color: #00ff99; background: #111; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-bottom: 8px; font-weight: bold; border: 1px solid #333; }
-        .copy-btn { background: #3a3a3a; padding: 6px 12px; font-size: 12px; margin-top: -5px; margin-bottom: 8px; color: #00ff99; border-radius: 6px; cursor: pointer; display: block; float: right; border: 1px solid #444; }
-        .copy-btn:hover { background: #444; }
-        .clear-btn { background: #ff3333; float: right; }
-        .clear-btn:hover { background: #ff5555; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: #0e0e10; color: #e4e4e7; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        /* 🎨 จัดตกแต่งส่วน Markdown คอนเทนต์ภายในแชท */
-        .ai pre { background: #1e1e1e !important; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid #2d2d2d; position: relative; }
-        .ai code { font-family: 'Courier New', Courier, monospace; font-size: 14px; padding: 2px 6px; background: #1e1e1e; border-radius: 4px; color: #ff79c6; }
+        /* Container หลักครอบทั้งจอ */
+        .container { max-width: 800px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; position: relative; }
+        
+        /* ส่วนควบคุมด้านบน (Header Panel) */
+        .header-panel { background: #18181b; padding: 12px 16px; border-bottom: 1px solid #27272a; }
+        h1 { text-align: center; color: #00ff99; font-size: 18px; margin: 0 0 10px 0; font-weight: 700; }
+        
+        .control-row { display: flex; flex-direction: column; gap: 8px; }
+        .select-wrapper { width: 100%; }
+        select, input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #27272a; background: #27272a; color: white; font-size: 14px; outline: none; }
+        select:focus, input:focus { border-color: #00cc77; }
+        
+        .key-group { display: flex; gap: 8px; width: 100%; }
+        .key-group input { flex-grow: 1; }
+        
+        /* ปุ่มกดสไตล์มินิมอล */
+        button { padding: 10px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .btn-check { background: #00cc77; color: white; }
+        .btn-check:hover { background: #00ff88; }
+        .btn-clear { background: #ef4444; color: white; }
+        .btn-clear:hover { background: #f87171; }
+
+        #current-model { font-size: 12px; color: #a1a1aa; display: block; margin-top: 4px; text-align: center; }
+
+        /* พื้นที่แสดงข้อความแชท (ยืดหยุ่นเต็มจอและซ่อนสกรอลบาร์ส่วนเกิน) */
+        .messages { flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: #0e0e10; padding-bottom: 90px; }
+        
+        /* กล่องข้อความสไตล์โมเดิร์นแอปแชท */
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+        .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .ai { background: #18181b; color: #e4e4e7; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #27272a; }
+        
+        /* Tags & Buttons ภายในฝั่ง AI */
+        .model-tag { font-size: 11px; color: #00ff99; background: #09090b; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; border: 1px solid #27272a; }
+        .copy-btn { background: #27272a; padding: 4px 8px; font-size: 11px; color: #00ff99; border-radius: 4px; cursor: pointer; float: right; border: 1px solid #3f3f46; margin-bottom: 6px; }
+        
+        /* ตกแต่งบล็อกโค้ดไม่ให้ล้นหน้าจอมือถือ */
+        .ai pre { background: #09090b !important; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #27272a; }
+        .ai code { font-family: monospace; font-size: 13px; padding: 2px 4px; background: #27272a; border-radius: 4px; color: #f43f5e; }
         .ai pre code { padding: 0; background: transparent; color: inherit; display: block; }
-        .ai p { margin: 6px 0; }
-        .ai ul, .ai ol { margin: 6px 0; padding-left: 20px; }
-        .ai table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px; }
-        .ai th, .ai td { border: 1px solid #444; padding: 8px; text-align: left; }
-        .ai th { background: #2b2b2b; color: #00ff99; }
-        .clearfix { clear: both; }
+        .ai p { margin: 4px 0; }
+        .ai table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px; overflow-x: auto; display: block; }
+        .ai th, .ai td { border: 1px solid #27272a; padding: 6px; text-align: left; }
+        .ai th { background: #27272a; color: #00ff99; }
+
+        /* แถบพิมพ์ข้อความด้านล่างสุด ตรึงไว้ถาวร (Sticky Footer) */
+        .input-panel { position: absolute; bottom: 0; left: 0; right: 0; background: #18181b; padding: 12px 16px; border-top: 1px solid #27272a; display: flex; gap: 8px; align-items: center; }
+        .input-panel input { flex-grow: 1; background: #27272a; border: 1px solid #3f3f46; padding: 12px; }
+        .input-panel button { background: #00cc77; color: white; padding: 12px 20px; }
+
+        /* ปรับแต่งการแสดงผลเมื่อเข้าสู่หน้าจอมือถือขนาดเล็ก */
+        @media (min-width: 600px) {
+            .control-row { flex-direction: row; align-items: center; }
+            .select-wrapper { width: 40%; }
+            .key-group { width: 60%; }
+            h1 { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Safe Free AI Hub (Markdown Pro)</h1>
-
-        <div class="panel">
-            <select id="model" style="width: 100%; max-width: 400px;">
-                <option value="openrouter/free">🚀 Auto Free (แนะนำที่สุด - ระบบสลับตัวที่ว่างให้ฟรีอัตโนมัติ)</option>
-                <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (รุ่นเสถียร คุยลื่นไหล)</option>
-            </select>
-            <span id="current-model" style="margin-left:10px; color:#00ff99; display: inline-block; margin-top: 5px;"></span>
-            
-            <br><br>
-            <input id="key" placeholder="OpenRouter API Key" style="width:65%">
-            <button onclick="checkKey()">🔍 เช็ก Key</button>
-            <button onclick="clearMemory()" class="clear-btn">🧹 ล้างความจำ</button>
+        <div class="header-panel">
+            <h1>🤖 Safe Free AI Hub</h1>
+            <div class="control-row">
+                <div class="select-wrapper">
+                    <select id="model">
+                        <option value="openrouter/free">🚀 Auto Free (แนะนำระบบเลือกให้ฟรี)</option>
+                        <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (รุ่นเสถียร)</option>
+                    </select>
+                </div>
+                <div class="key-group">
+                    <input id="key" type="password" placeholder="OpenRouter API Key">
+                    <button onclick="checkKey()" class="btn-check">🔍 จำ Key</button>
+                    <button onclick="clearMemory()" class="btn-clear">🧹 ล้างแชท</button>
+                </div>
+            </div>
+            <span id="current-model"></span>
         </div>
 
         <div id="messages" class="messages"></div>
 
-        <div class="panel" style="display: flex;">
-            <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI..." 
-                   style="flex-grow: 1;" onkeypress="if(event.key==='Enter') send()">
-            <button onclick="send()" style="width: 80px;">ส่ง</button>
+        <div class="input-panel">
+            <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI..." onkeypress="if(event.key==='Enter') send()">
+            <button onclick="send()">ส่ง</button>
         </div>
     </div>
 
     <script>
-        // ⚙️ คอนฟิกตัวแปลงสคริปต์ระบุวิธีแปลผล Markdown
         marked.setOptions({
-            breaks: true, // ตรวจจับการกดขึ้นบรรทัดใหม่อัตโนมัติ
+            breaks: true,
             highlight: function(code, lang) {
-                // ค้นหาภาษาของโค้ดเพื่อแมตช์สีให้เหมาะสม ถ้าไม่เจอก็ให้รันแบบสุ่มจัดกลุ่มคำทั่วไป
                 const language = hljs.getLanguage(lang) ? lang : 'plaintext';
                 return hljs.highlight(code, { language }).value;
             }
@@ -90,7 +122,7 @@
             const modelSelect = document.getElementById("model");
             const display = document.getElementById("current-model");
             let name = modelSelect.options[modelSelect.selectedIndex].text;
-            display.textContent = "กำลังใช้: " + name;
+            display.textContent = "ระบบกำลังสแตนด์บายที่: " + name;
         }
         document.getElementById("model").addEventListener("change", updateCurrentModel);
         updateCurrentModel();
@@ -98,14 +130,14 @@
         function clearMemory() {
             chatHistory = [];
             document.getElementById("messages").innerHTML = "";
-            alert("ล้างความจำเรียบร้อยแล้ว!");
+            alert("ล้างความจำการคุยเรียบร้อยแล้ว!");
         }
 
         async function checkKey() {
             saveKey();
             let key = keyInput.value.trim();
-            if (!key) return alert("ใส่ Key ก่อน");
-            alert("Key ถูกบันทึกแล้ว");
+            if (!key) return alert("กรุณาใส่ Key ก่อนครับ");
+            alert("บันทึก API Key ลงเครื่องสำเร็จ!");
         }
 
         async function send() {
@@ -118,46 +150,33 @@
 
             const loading = document.createElement("div");
             loading.className = "msg ai";
-            loading.innerHTML = "กำลังคิด...";
+            loading.innerHTML = "กำลังประมวลผล...";
             box.appendChild(loading);
             box.scrollTop = box.scrollHeight;
 
             try {
                 const result = await callAIWithFallback(text);
-                
-                // 🔄 เปลี่ยนแปลงสำคัญ: ใช้ marked.parse() แปลง Markdown ดิบให้กลายเป็นโค้ดและตาราง HTML ที่จัดหน้าสวยงาม
-                let htmlResponse = `<div class="model-tag">🤖 Responded by: ${result.modelName}</div><br>`;
+                let htmlResponse = `<button class="copy-btn">📋 ก๊อปปี้โค้ด</button>`;
+                htmlResponse += `<div class="model-tag">🤖 ${result.modelName}</div><br>`;
                 htmlResponse += `<div class="markdown-body">${marked.parse(result.answer)}</div>`;
                 
                 loading.innerHTML = htmlResponse;
-                
-                // สั่งระบบ Highlight โค้ดที่เพิ่งเจนขึ้นมาใหม่ และแปะปุ่มก๊อปปี้โค้ด
                 loading.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
-                addCopyButtons(loading);   
+                setupGlobalCopy(loading, result.answer);
             } catch (e) {
                 loading.innerHTML = "❌ " + e.message;
             }
             box.scrollTop = box.scrollHeight;
         }
 
-        function addCopyButtons(element) {
-            const codeBlocks = element.querySelectorAll("pre");
-            codeBlocks.forEach(block => {
-                // ตรวจเช็คเพื่อไม่ให้สร้างปุ่มเบิ้ลซ้ำซ้อน
-                if (block.querySelector('.copy-btn')) return;
-
-                const btn = document.createElement("button");
-                btn.className = "copy-btn";
-                btn.textContent = "📋 ก๊อปปี้โค้ด";
-                btn.onclick = () => {
-                    const targetCode = block.querySelector('code') ? block.querySelector('code').textContent : block.textContent;
-                    navigator.clipboard.writeText(targetCode);
-                    btn.textContent = "✅ ก๊อปแล้ว!";
-                    setTimeout(() => btn.textContent = "📋 ก๊อปปี้โค้ด", 2000);
-                };
-                // แปะปุ่มไว้ด้านบนสุดของบล็อกโค้ด
-                block.insertBefore(btn, block.firstChild);
-            });
+        function setupGlobalCopy(element, rawText) {
+            const btn = element.querySelector('.copy-btn');
+            if (!btn) return;
+            btn.onclick = () => {
+                navigator.clipboard.writeText(rawText);
+                btn.textContent = "✅ ก๊อปปี้แล้ว!";
+                setTimeout(() => btn.textContent = "📋 ก๊อปปี้โค้ด", 2000);
+            };
         }
 
         async function callAIWithFallback(text) {
@@ -165,7 +184,6 @@
             try {
                 return await fetchFromOpenRouter(text, selectedModel);
             } catch (error) {
-                console.warn(`โมเดล ${selectedModel} มีปัญหา: ${error.message} -> กำลังเปิดระบบกู้ภัยด้วย Auto Free...`);
                 if (selectedModel !== "openrouter/free") {
                     return await fetchFromOpenRouter(text, "openrouter/free");
                 } else {
@@ -180,23 +198,17 @@
             if (!key) throw new Error("ยังไม่ได้ใส่ OpenRouter API Key");
 
             if (modelId !== "openrouter/free" && !modelId.endsWith(":free") && !modelId.includes(":free-")) {
-                throw new Error("ระบบบล็อกเพื่อความปลอดภัย (ไม่ใช่โมเดลเวอร์ชันฟรี)");
+                throw new Error("ระบบบล็อกเพื่อความปลอดภัย (ไม่ใช่โมเดลฟรี)");
             }
 
-            // 🧠 การจัดการความจำแบบเป็นคู่ชวนคุย (ลบทั้งแผง User + Assistant พร้อมกันป้องกันคุยสลับ)
             let tempHistory = [...chatHistory, { role: "user", content: text }];
-            while (tempHistory.length > 16) {
-                tempHistory.shift(); 
-            }
+            while (tempHistory.length > 16) { tempHistory.shift(); }
 
             let body = {
                 model: modelId,
                 temperature: 0.7,
                 messages: [
-                    { 
-                        role: "system", 
-                        content: "คุณคือผู้ช่วยภาษาไทยที่เป็นมิตร ฉลาด เป็นธรรมชาติ ไม่สุภาพเกินไป ตอบตรงประเด็นและมีประโยชน์" 
-                    },
+                    { role: "system", content: "คุณคือผู้ช่วยภาษาไทยที่เป็นมิตร ฉลาด เป็นธรรมชาติ ตอบตรงประเด็น" },
                     ...tempHistory
                 ]
             };
@@ -215,19 +227,12 @@
 
             let aiAnswer = data.choices[0].message.content;
             
-            // อัปเดตเก็บประวัติการคุยเข้าสู่ฐานข้อมูลประวัติหลักแบบคู่สมบูรณ์
             chatHistory.push({ role: "user", content: text });
             chatHistory.push({ role: "assistant", content: aiAnswer });
             
-            // ตรวจสอบความยาว หากประวัติหลักเกินขอบเขต ให้หั่นส่วนหัวออกเป็นคู่ (User และ Assistant ลบพร้อมกัน)
-            while (chatHistory.length > 16) {
-                chatHistory.splice(0, 2);
-            }
+            while (chatHistory.length > 16) { chatHistory.splice(0, 2); }
 
-            return {
-                answer: aiAnswer,
-                modelName: data.model || modelId
-            };
+            return { answer: aiAnswer, modelName: data.model || modelId };
         }
     </script>
 </body>

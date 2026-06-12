@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Safe Free AI Hub (Multi-Model Pro)</title>
+    <title>Safe Free AI Hub (Hybrid Engine)</title>
     
+    <!-- 📦 Library สำหรับแปลง Markdown และ ไฮไลท์โค้ด -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -74,19 +75,20 @@
 </head>
 <body>
     <div class="container">
+        <!-- บล็อกหัวเว็บไซต์อัปเกรดระบบไฮบริดแยกสองฝั่ง -->
         <div class="header-panel">
             <h1>🤖 Safe Free AI Hub</h1>
             <div class="control-row">
                 <div class="select-wrapper">
                     <select id="model">
-                        <option value="openrouter/free">🚀 Auto Free (แนะนำ - ระบบสลับตัวฟรีให้อัตโนมัติ)</option>
-                        <option value="google/gemini-2.5-flash:free">✨ Gemini 2.5 Flash Free (ฉลาด ตอบไว)</option>
-                        <option value="openai/gpt-4o-mini:free">🟢 GPT-4o Mini Free (เสถียร คุยสนุก)</option>
-                        <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (รุ่นทางเลือก)</option>
+                        <option value="gemini-direct">✨ Gemini 2.5 Flash (ต่อตรง Google API - แนะนำลื่นไหลสุด)</option>
+                        <option value="openrouter/free">🚀 Auto Free (OpenRouter - ระบบสลับตัวฟรีรวม)</option>
+                        <option value="openai/gpt-4o-mini:free">🟢 GPT-4o Mini Free (OpenRouter - ค่าย OpenAI)</option>
+                        <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (OpenRouter - รุ่นทางเลือก)</option>
                     </select>
                 </div>
                 <div class="key-group">
-                    <input id="key" type="password" placeholder="OpenRouter API Key">
+                    <input id="key" type="password" placeholder="กรุณากรอก API Key">
                     <button onclick="checkKey()" class="btn-check">🔍 จำ Key</button>
                     <button onclick="clearMemory()" class="btn-clear">🧹 ล้างแชท</button>
                 </div>
@@ -94,8 +96,10 @@
             <span id="current-model"></span>
         </div>
 
+        <!-- หน้าต่างพื้นที่แชท -->
         <div id="messages" class="messages"></div>
 
+        <!-- ฟุตเตอร์กล่องพิมพ์ข้อความ ยึดติดล่างหน้าจอถาวร -->
         <div class="input-panel">
             <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI..." onkeypress="if(event.key==='Enter') send()">
             <button onclick="send()">ส่ง</button>
@@ -112,25 +116,46 @@
         });
 
         const keyInput = document.getElementById("key");
-        keyInput.value = localStorage.getItem("or_key") || "";
+        let chatHistory = []; // ประวัติแชทหลักสำหรับ OpenRouter
+        let geminiHistory = []; // ประวัติแชทเฉพาะโครงสร้างของ Google Direct
 
-        let chatHistory = [];
+        // ฟังก์ชันช่วยเลือกแสดง Placeholder และดึง Key ให้ตรงตามค่ายที่เลือก
+        function handleKeyUIRefresh() {
+            const selectedModel = document.getElementById("model").value;
+            if (selectedModel === "gemini-direct") {
+                keyInput.placeholder = "Google Studio API Key (AIZA...)";
+                keyInput.value = localStorage.getItem("gemini_direct_key") || "";
+            } else {
+                keyInput.placeholder = "OpenRouter API Key (sk-or...)";
+                keyInput.value = localStorage.getItem("or_key") || "";
+            }
+        }
 
         function saveKey() {
-            localStorage.setItem("or_key", keyInput.value.trim());
+            const selectedModel = document.getElementById("model").value;
+            const val = keyInput.value.trim();
+            if (selectedModel === "gemini-direct") {
+                localStorage.setItem("gemini_direct_key", val);
+            } else {
+                localStorage.setItem("or_key", val);
+            }
         }
 
         function updateCurrentModel() {
+            handleKeyUIRefresh();
             const modelSelect = document.getElementById("model");
             const display = document.getElementById("current-model");
             let name = modelSelect.options[modelSelect.selectedIndex].text;
             display.textContent = "ระบบกำลังสแตนด์บายที่: " + name;
         }
         document.getElementById("model").addEventListener("change", updateCurrentModel);
+        
+        // รันครั้งแรกตอนโหลดหน้าเว็บ
         updateCurrentModel();
 
         function clearMemory() {
             chatHistory = [];
+            geminiHistory = [];
             document.getElementById("messages").innerHTML = "";
             alert("ล้างความจำการคุยเรียบร้อยแล้ว!");
         }
@@ -139,7 +164,7 @@
             saveKey();
             let key = keyInput.value.trim();
             if (!key) return alert("กรุณาใส่ Key ก่อนครับ");
-            alert("บันทึก API Key ลงเครื่องสำเร็จ!");
+            alert("บันทึก API Key ของระบบนี้สำเร็จแล้ว!");
         }
 
         async function send() {
@@ -157,7 +182,15 @@
             box.scrollTop = box.scrollHeight;
 
             try {
-                const result = await callAIWithFallback(text);
+                const selectedModel = document.getElementById("model").value;
+                let result;
+
+                if (selectedModel === "gemini-direct") {
+                    result = await fetchFromGeminiDirect(text);
+                } else {
+                    result = await callAIWithFallback(text);
+                }
+
                 let htmlResponse = `<button class="copy-btn">📋 ก๊อปปี้โค้ด</button>`;
                 htmlResponse += `<div class="model-tag">🤖 ${result.modelName}</div><br>`;
                 htmlResponse += `<div class="markdown-body">${marked.parse(result.answer)}</div>`;
@@ -181,13 +214,13 @@
             };
         }
 
+        // ================= ENGINE 1: OPENROUTER (FALLBACK BACKUP) =================
         async function callAIWithFallback(text) {
             const selectedModel = document.getElementById("model").value;
             try {
                 return await fetchFromOpenRouter(text, selectedModel);
             } catch (error) {
-                console.warn(`โมเดล ${selectedModel} มีปัญหา: ${error.message} -> สลับไปใช้ Auto Free...`);
-                // ถ้ารุ่นระบุเจาะจงพัง ให้ถอยกลับไปตายรังที่ออโต้ฟรีเพื่อความชัวร์
+                console.warn(`โมเดล ${selectedModel} ของ OpenRouter ติดขัด: ${error.message} -> ถอยไปออโต้ฟรี...`);
                 if (selectedModel !== "openrouter/free") {
                     return await fetchFromOpenRouter(text, "openrouter/free");
                 } else {
@@ -197,9 +230,8 @@
         }
 
         async function fetchFromOpenRouter(text, modelId) {
-            let key = keyInput.value.trim();
-            saveKey();
-            if (!key) throw new Error("ยังไม่ได้ใส่ OpenRouter API Key");
+            let key = localStorage.getItem("or_key") || "";
+            if (!key) throw new Error("ยังไม่ได้ใส่ OpenRouter API Key (กรุณาเลือกโมเดลอื่นหรือใส่คีย์ก่อนครับ)");
 
             if (modelId !== "openrouter/free" && !modelId.endsWith(":free") && !modelId.includes(":free-")) {
                 throw new Error("ระบบบล็อกเพื่อความปลอดภัย (ไม่ใช่โมเดลฟรี)");
@@ -233,10 +265,56 @@
             
             chatHistory.push({ role: "user", content: text });
             chatHistory.push({ role: "assistant", content: aiAnswer });
-            
             while (chatHistory.length > 16) { chatHistory.splice(0, 2); }
 
             return { answer: aiAnswer, modelName: data.model || modelId };
+        }
+
+        // ================= ENGINE 2: GOOGLE AI STUDIO DIRECT (MAIN ENGINE) =================
+        async function fetchFromGeminiDirect(text) {
+            let key = localStorage.getItem("gemini_direct_key") || "";
+            if (!key) throw new Error("ยังไม่ได้ใส่ Google Gemini API Key ในช่องด้านบนครับ");
+
+            // อัปเดตประวัติการคุยให้เข้าโครงสร้างเฉพาะของ Google API { role: "user" | "model", parts: [...] }
+            geminiHistory.push({ role: "user", parts: [{ text: text }] });
+            while (geminiHistory.length > 16) { geminiHistory.shift(); }
+
+            // ตั้งค่า System Instruction บังคับนิสัยบอท
+            const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+            
+            let body = {
+                contents: geminiHistory,
+                systemInstruction: {
+                    parts: [{ text: "คุณคือผู้ช่วยภาษาไทยที่เป็นมิตร ฉลาด เป็นธรรมชาติ ตอบตรงประเด็น และเขียนอธิบายโค้ดได้อย่างเชี่ยวชาญ" }]
+                },
+                generationConfig: {
+                    temperature: 0.7
+                }
+            };
+
+            const res = await fetch(targetUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.error ? errData.error.message : `HTTP status ${res.status}`;
+                throw new Error(`Google API ตอบกลับผิดพลาด: ${errMsg}`);
+            }
+
+            const data = await res.json();
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error("ไม่ได้รับข้อความตอบกลับจากระบบเจมินาย (อาจโดนระบบคัดกรองเนื้อหาปัดตก)");
+            }
+
+            let aiAnswer = data.candidates[0].content.parts[0].text;
+            
+            // บันทึกคำตอบลงประวัติฝั่งโมเดล
+            geminiHistory.push({ role: "model", parts: [{ text: aiAnswer }] });
+
+            return { answer: aiAnswer, modelName: "google/gemini-2.5-flash (Direct API)" };
         }
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Safe Free AI Hub (Mobile Pro)</title>
+    <title>Safe Free AI Hub (Multi-Model Pro)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -37,7 +37,7 @@
 
         #current-model { font-size: 12px; color: #a1a1aa; display: block; margin-top: 4px; text-align: center; }
 
-        /* พื้นที่แสดงข้อความแชท (ยืดหยุ่นเต็มจอและซ่อนสกรอลบาร์ส่วนเกิน) */
+        /* พื้นที่แสดงข้อความแชท */
         .messages { flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: #0e0e10; padding-bottom: 90px; }
         
         /* กล่องข้อความสไตล์โมเดิร์นแอปแชท */
@@ -66,8 +66,8 @@
         /* ปรับแต่งการแสดงผลเมื่อเข้าสู่หน้าจอมือถือขนาดเล็ก */
         @media (min-width: 600px) {
             .control-row { flex-direction: row; align-items: center; }
-            .select-wrapper { width: 40%; }
-            .key-group { width: 60%; }
+            .select-wrapper { width: 45%; }
+            .key-group { width: 55%; }
             h1 { font-size: 22px; }
         }
     </style>
@@ -79,8 +79,10 @@
             <div class="control-row">
                 <div class="select-wrapper">
                     <select id="model">
-                        <option value="openrouter/free">🚀 Auto Free (แนะนำระบบเลือกให้ฟรี)</option>
-                        <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (รุ่นเสถียร)</option>
+                        <option value="openrouter/free">🚀 Auto Free (แนะนำ - ระบบสลับตัวฟรีให้อัตโนมัติ)</option>
+                        <option value="google/gemini-2.5-flash:free">✨ Gemini 2.5 Flash Free (ฉลาด ตอบไว)</option>
+                        <option value="openai/gpt-4o-mini:free">🟢 GPT-4o Mini Free (เสถียร คุยสนุก)</option>
+                        <option value="meta-llama/llama-3.2-3b-instruct:free">🦙 Llama 3.2 Free (รุ่นทางเลือก)</option>
                     </select>
                 </div>
                 <div class="key-group">
@@ -184,6 +186,8 @@
             try {
                 return await fetchFromOpenRouter(text, selectedModel);
             } catch (error) {
+                console.warn(`โมเดล ${selectedModel} มีปัญหา: ${error.message} -> สลับไปใช้ Auto Free...`);
+                // ถ้ารุ่นระบุเจาะจงพัง ให้ถอยกลับไปตายรังที่ออโต้ฟรีเพื่อความชัวร์
                 if (selectedModel !== "openrouter/free") {
                     return await fetchFromOpenRouter(text, "openrouter/free");
                 } else {

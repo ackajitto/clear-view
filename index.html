@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Safe Free AI Hub (Hybrid Engine)</title>
     
-    <!-- 📦 Library สำหรับแปลง Markdown และ ไฮไลท์โค้ด -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -26,8 +25,8 @@
         select, input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #27272a; background: #27272a; color: white; font-size: 14px; outline: none; }
         select:focus, input:focus { border-color: #00cc77; }
         
-        .key-group { display: flex; gap: 8px; width: 100%; }
-        .key-group input { flex-grow: 1; }
+        .key-group { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; }
+        .key-group input { flex-grow: 1; min-width: 150px; }
         
         /* ปุ่มกดสไตล์มินิมอล */
         button { padding: 10px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
@@ -35,6 +34,12 @@
         .btn-check:hover { background: #00ff88; }
         .btn-clear { background: #ef4444; color: white; }
         .btn-clear:hover { background: #f87171; }
+        
+        /* ปุ่มหมวดหมู่จัดการไฟล์แชทที่เพิ่มเข้ามาใหม่ */
+        .btn-save { background: #3b82f6; color: white; }
+        .btn-save:hover { background: #60a5fa; }
+        .btn-upload { background: #a855f7; color: white; }
+        .btn-upload:hover { background: #c084fc; }
 
         #current-model { font-size: 12px; color: #a1a1aa; display: block; margin-top: 4px; text-align: center; }
 
@@ -44,7 +49,7 @@
         /* กล่องข้อความสไตล์โมเดิร์นแอปแชท */
         .msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
         .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .ai { background: #18181b; color: #e4e4e7; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #27272a; }
+        .ai { background: #18181b; color: #e4e4e7; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #27272a; position: relative; }
         
         /* Tags & Buttons ภายในฝั่ง AI */
         .model-tag { font-size: 11px; color: #00ff99; background: #09090b; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; border: 1px solid #27272a; }
@@ -67,15 +72,14 @@
         /* ปรับแต่งการแสดงผลเมื่อเข้าสู่หน้าจอมือถือขนาดเล็ก */
         @media (min-width: 600px) {
             .control-row { flex-direction: row; align-items: center; }
-            .select-wrapper { width: 45%; }
-            .key-group { width: 55%; }
+            .select-wrapper { width: 40%; }
+            .key-group { width: 60%; }
             h1 { font-size: 22px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- บล็อกหัวเว็บไซต์อัปเกรดระบบไฮบริดแยกสองฝั่ง -->
         <div class="header-panel">
             <h1>🤖 Safe Free AI Hub</h1>
             <div class="control-row">
@@ -90,16 +94,17 @@
                 <div class="key-group">
                     <input id="key" type="password" placeholder="กรุณากรอก API Key">
                     <button onclick="checkKey()" class="btn-check">🔍 จำ Key</button>
+                    <button onclick="saveChatToFile()" class="btn-save">💾 เซฟแชท</button>
+                    <button onclick="triggerUpload()" class="btn-upload">📤 อัปโหลดแชท</button>
+                    <input type="file" id="file-uploader" accept=".json" style="display: none;" onchange="loadChatFromFile(event)">
                     <button onclick="clearMemory()" class="btn-clear">🧹 ล้างแชท</button>
                 </div>
             </div>
             <span id="current-model"></span>
         </div>
 
-        <!-- หน้าต่างพื้นที่แชท -->
         <div id="messages" class="messages"></div>
 
-        <!-- ฟุตเตอร์กล่องพิมพ์ข้อความ ยึดติดล่างหน้าจอถาวร -->
         <div class="input-panel">
             <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI..." onkeypress="if(event.key==='Enter') send()">
             <button onclick="send()">ส่ง</button>
@@ -118,6 +123,9 @@
         const keyInput = document.getElementById("key");
         let chatHistory = []; // ประวัติแชทหลักสำหรับ OpenRouter
         let geminiHistory = []; // ประวัติแชทเฉพาะโครงสร้างของ Google Direct
+        
+        // ตัวแปรชั่วคราวเก็บข้อความดิบ (Raw Text) ของ AI แต่ละกล่องไว้ใช้ทำระบบ Copy Code หลังจากโหลดไฟล์กลับมาใหม่
+        let rawAiAnswers = []; 
 
         // ฟังก์ชันช่วยเลือกแสดง Placeholder และดึง Key ให้ตรงตามค่ายที่เลือก
         function handleKeyUIRefresh() {
@@ -156,6 +164,7 @@
         function clearMemory() {
             chatHistory = [];
             geminiHistory = [];
+            rawAiAnswers = [];
             document.getElementById("messages").innerHTML = "";
             alert("ล้างความจำการคุยเรียบร้อยแล้ว!");
         }
@@ -166,6 +175,85 @@
             if (!key) return alert("กรุณาใส่ Key ก่อนครับ");
             alert("บันทึก API Key ของระบบนี้สำเร็จแล้ว!");
         }
+
+        // ================= ฟีเจอร์ใหม่: เซฟและอัปโหลดประวัติแชท =================
+        
+        // 1. ฟังก์ชันส่งออกไฟล์แชท (.json) ลงเครื่องมือถือหรือคอมพิวเตอร์
+        function saveChatToFile() {
+            const box = document.getElementById("messages");
+            if (box.children.length === 0) return alert("ไม่มีข้อความแชทให้บันทึกในขณะนี้ครับ");
+
+            const chatData = {
+                uiHtml: box.innerHTML,
+                chatHistory: chatHistory,
+                geminiHistory: geminiHistory,
+                rawAiAnswers: rawAiAnswers,
+                savedAt: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chatData));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            
+            // ตั้งชื่อไฟล์ตามวันเวลาปัจจุบัน
+            const timeStamp = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
+            downloadAnchor.setAttribute("download", `ai-chat-history-${timeStamp}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // 2. ฟังก์ชันจำลองการกดคลิกเลือกไฟล์
+        function triggerUpload() {
+            document.getElementById("file-uploader").click();
+        }
+
+        // 3. ฟังก์ชันอ่านไฟล์ที่อัปโหลดเข้ามา แล้วนำไปใส่ในระบบแชทต่อ
+        function loadChatFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+                    
+                    if (!parsedData.uiHtml || (!parsedData.chatHistory && !parsedData.geminiHistory)) {
+                        throw new Error("โครงสร้างไฟล์ไม่ถูกต้องหรือไม่รองรับ");
+                    }
+
+                    // คืนค่าข้อมูลประวัติและ UI กลับมาบนหน้าจอ
+                    chatHistory = parsedData.chatHistory || [];
+                    geminiHistory = parsedData.geminiHistory || [];
+                    rawAiAnswers = parsedData.rawAiAnswers || [];
+                    
+                    const box = document.getElementById("messages");
+                    box.innerHTML = parsedData.uiHtml;
+
+                    // ผูกระบบปุ่มก๊อปปี้โค้ดให้กับกล่อง AI เก่าที่เพิ่งดาวน์โหลดเข้ามาใหม่
+                    const aiMessages = box.querySelectorAll('.msg.ai');
+                    aiMessages.forEach((loadingElement, index) => {
+                        const rawText = rawAiAnswers[index];
+                        if (rawText) {
+                            setupGlobalCopy(loadingElement, rawText);
+                        }
+                    });
+
+                    // ไฮไลท์ Syntax โค้ดคอมพิวเตอร์ใหม่อีกครั้ง
+                    box.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+                    box.scrollTop = box.scrollHeight;
+
+                    alert("🎉 อัปโหลดและเชื่อมต่อประวัติแชทสำเร็จ! คุณสามารถพิมพ์คุยต่อได้ทันที");
+                } catch (err) {
+                    alert("❌ เกิดข้อผิดพลาด: ไม่สามารถอ่านไฟล์นี้ได้ (" + err.message + ")");
+                }
+                // ล้างค่าอินพุตเพื่อให้เลือกไฟล์เดิมซ้ำได้ในอนาคต
+                event.target.value = ""; 
+            };
+            reader.readAsText(file);
+        }
+
+        // ===================================================================
 
         async function send() {
             let text = document.getElementById("text").value.trim();
@@ -190,6 +278,9 @@
                 } else {
                     result = await callAIWithFallback(text);
                 }
+
+                // บันทึกข้อความดิบเก็บไว้ใน Array เผื่อใช้สำหรับตอนดาวน์โหลดส่งออกไฟล์
+                rawAiAnswers.push(result.answer);
 
                 let htmlResponse = `<button class="copy-btn">📋 ก๊อปปี้โค้ด</button>`;
                 htmlResponse += `<div class="model-tag">🤖 ${result.modelName}</div><br>`;

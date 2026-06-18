@@ -109,7 +109,7 @@
             <div id="attachment-area"></div>
             <div class="input-panel">
                 <button onclick="triggerFileAttachment()" class="btn-attach" title="แนบภาพ, PDF หรือไฟล์ Word">📎</button>
-                <input type="file" id="main-file-uploader" accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display: none;" onchange="handleFileAttachment(event)">
+                <input type="file" id="main-file-uploader" accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html" style="display: none;" onchange="handleFileAttachment(event)">
                 
                 <input id="text" placeholder="พิมพ์ข้อความ หรือแนบไฟล์รูปภาพ/PDF/Word ให้บอทช่วยสรุปงาน..." onkeypress="if(event.key==='Enter') send()">
                 <button onclick="send()">ส่ง</button>
@@ -206,12 +206,13 @@
                 };
                 reader.readAsArrayBuffer(file);
             }
-            // 4. ไฟล์ข้อความทั่วไป (.txt)
+            // 4. เพิ่มการจัดการไฟล์ HTML (.html หรือ .htm) และไฟล์ข้อความทั่วไป (.txt)
             else {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     currentAttachedFile.textData = e.target.result;
-                    area.innerHTML = `<div class="attachment-badge">📄 ไฟล์ข้อความ: ${file.name} <button onclick="clearAttachment()">×</button></div>`;
+                    const fileLabel = file.name.endsWith(".html") || file.name.endsWith(".htm") ? "🌐 ไฟล์ HTML" : "📄 ไฟล์ข้อความ";
+                    area.innerHTML = `<div class="attachment-badge">${fileLabel}: ${file.name} <button onclick="clearAttachment()">×</button></div>`;
                 };
                 reader.readAsText(file);
             }
@@ -314,7 +315,7 @@
                 partsArray.push({ inlineData: { mimeType: fileObj.mimeType, data: fileObj.base64Data } });
                 partsArray.push({ text: promptText || "ช่วยวิเคราะห์หรืออธิบายรูปภาพนี้ทีครับ" });
             } 
-            // กรณีสกัดได้เนื้อความมาจากไฟล์เอกสาร (.docx / .pdf)
+            // กรณีสกัดได้เนื้อความมาจากไฟล์เอกสาร (.docx / .pdf / .html)
             else if (fileObj && fileObj.textData) {
                 partsArray.push({ text: `${promptText || "วิเคราะห์สรุปงานจากข้อมูลนี้"}\n\n[เนื้อหาในเอกสารแนบชื่อ ${fileObj.name}]:\n${fileObj.textData}` });
             } 

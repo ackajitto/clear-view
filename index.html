@@ -2,199 +2,400 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lite AI Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Safe Free AI Hub (File Upload Enabled)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background: #0e0e10; color: #e4e4e7; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
-        .container { max-width: 800px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; }
-        .header-panel { background: #18181b; padding: 12px; border-bottom: 1px solid #27272a; text-align: center; }
-        h1 { font-size: 18px; color: #00ff99; margin: 0 0 8px 0; }
-        .control-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        select, input { padding: 8px; border-radius: 6px; border: 1px solid #27272a; background: #27272a; color: white; font-size: 13px; }
-        button { padding: 8px 12px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background: #27272a; color: white; }
-        .btn-check { background: #00cc77; }
-        .btn-clear { background: #ef4444; }
-        .attachment-badge { background: #1e1b4b; color: #00ff99; padding: 4px 10px; border-radius: 4px; font-size: 12px; margin: 6px auto 0 auto; width: fit-content; }
-        .messages { flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 80px; }
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; line-height: 1.4; font-size: 14px; }
-        .user { background: #2563eb; color: white; align-self: flex-end; }
-        .ai { background: #18181b; align-self: flex-start; border: 1px solid #27272a; width: 100%; }
-        .model-tag { font-size: 11px; color: #00ff99; font-weight: bold; }
-        .chat-img-preview { max-width: 150px; max-height: 150px; border-radius: 6px; display: block; margin-bottom: 4px; }
-        .input-panel { position: absolute; bottom: 0; left: 0; right: 0; background: #18181b; padding: 12px; border-top: 1px solid #27272a; display: flex; gap: 8px; max-width: 800px; margin: 0 auto; }
-        .input-panel input { flex-grow: 1; }
-        .btn-send { background: #00cc77; }
+        
+        .container { max-width: 800px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; position: relative; }
+        .header-panel { background: #18181b; padding: 12px 16px; border-bottom: 1px solid #27272a; }
+        h1 { text-align: center; color: #00ff99; font-size: 18px; margin: 0 0 10px 0; font-weight: 700; }
+        
+        .control-row { display: flex; flex-direction: column; gap: 8px; }
+        .select-wrapper { width: 100%; }
+        select, input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #27272a; background: #27272a; color: white; font-size: 14px; outline: none; }
+        
+        .key-group { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; }
+        .key-group input { flex-grow: 1; min-width: 150px; }
+        
+        button { padding: 10px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .btn-check { background: #00cc77; color: white; }
+        .btn-check:hover { background: #00ff88; }
+        .btn-clear { background: #ef4444; color: white; }
+        .btn-clear:hover { background: #f87171; }
+        
+        .btn-save { background: #3b82f6; color: white; }
+        .btn-save:hover { background: #60a5fa; }
+        .btn-upload { background: #a855f7; color: white; }
+        .btn-upload:hover { background: #c084fc; }
+
+        #current-model { font-size: 12px; color: #a1a1aa; display: block; margin-top: 4px; text-align: center; }
+        
+        /* สไตล์คิวคลังแนบไฟล์ */
+        .attachment-badge { display: inline-flex; align-items: center; background: #27272a; border: 1px solid #3f3f46; color: #00ff99; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-top: 6px; }
+        .attachment-badge button { background: transparent; color: #ef4444; border: none; padding: 0 0 0 8px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        .messages { flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: #0e0e10; padding-bottom: 110px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+        .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .ai { background: #18181b; color: #e4e4e7; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #27272a; position: relative; }
+        
+        .inline-retry-container { align-self: flex-end; margin-top: -8px; margin-bottom: 4px; }
+        .btn-inline-retry { background: #27272a; color: #a1a1aa; padding: 4px 10px; font-size: 11px; border-radius: 6px; border: 1px solid #3f3f46; }
+
+        .model-tag { font-size: 11px; color: #00ff99; background: #09090b; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; border: 1px solid #27272a; }
+        .copy-btn { background: #27272a; padding: 4px 8px; font-size: 11px; color: #00ff99; border-radius: 4px; cursor: pointer; float: right; border: 1px solid #3f3f46; margin-bottom: 6px; }
+        
+        .ai pre { background: #09090b !important; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #27272a; }
+        .ai code { font-family: monospace; font-size: 13px; padding: 2px 4px; background: #27272a; border-radius: 4px; color: #f43f5e; }
+        .ai pre code { padding: 0; background: transparent; color: inherit; display: block; }
+        
+        /* สไตล์กล่องพรีวิวภาพขนาดเล็กในกล่องแชท */
+        .chat-img-preview { max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin-bottom: 8px; border: 1px solid #3f3f46; }
+
+        /* แถบอินพุตด้านล่าง */
+        .input-panel-wrapper { position: absolute; bottom: 0; left: 0; right: 0; background: #18181b; padding: 12px 16px; border-top: 1px solid #27272a; display: flex; flex-direction: column; gap: 4px; }
+        .input-panel { display: flex; gap: 8px; align-items: center; width: 100%; }
+        .input-panel input { flex-grow: 1; background: #27272a; border: 1px solid #3f3f46; padding: 12px; }
+        .input-panel button { background: #00cc77; color: white; padding: 12px 20px; }
+        
+        /* ปุ่มคลิปหนีบกระดาษแนบไฟล์ */
+        .btn-attach { background: #3f3f46; color: #e4e4e7; font-size: 18px; padding: 10px 14px; }
+        .btn-attach:hover { background: #52525b; }
+
+        @media (min-width: 600px) {
+            .control-row { flex-direction: row; align-items: center; }
+            .select-wrapper { width: 35%; }
+            .key-group { width: 65%; }
+            h1 { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header-panel">
-            <h1>🤖 Lite AI Hub</h1>
+            <h1>🤖 Safe Free AI Hub (Smart Upload)</h1>
             <div class="control-row">
-                <select id="model">
-                    <option value="gemini-direct">Gemini 2.5 Flash (ตรง)</option>
-                    <option value="openrouter/free">Auto Free (OpenRouter)</option>
-                </select>
-                <input id="key" type="password" placeholder="API Key">
-                <button onclick="saveKey()" class="btn-check">จำ Key</button>
-                <button onclick="clearMemory()" class="btn-clear">ล้างแชท</button>
+                <div class="select-wrapper">
+                    <select id="model">
+                        <option value="gemini-direct">✨ Gemini 2.5 Flash (ต่อตรง - แนะนำรองรับทั้งรูปภาพและเอกสาร)</option>
+                        <option value="openrouter/free">🚀 Auto Free (OpenRouter - สลับตัวฟรีอัตโนมัติ)</option>
+                    </select>
+                </div>
+                <div class="key-group">
+                    <input id="key" type="password" placeholder="กรุณากรอก API Key">
+                    <button onclick="checkKey()" class="btn-check">🔍 จำ Key</button>
+                    <button onclick="saveChatToFile()" class="btn-save">💾 เซฟแชท</button>
+                    <button onclick="triggerHistoryUpload()" class="btn-upload">📤 อัปโหลดประวัติแชท</button>
+                    <input type="file" id="history-uploader" accept=".json" style="display: none;" onchange="loadChatFromFile(event)">
+                    <button onclick="clearMemory()" class="btn-clear">🧹 ล้างแชท</button>
+                </div>
             </div>
-            <div id="attachment-area"></div>
+            <span id="current-model"></span>
         </div>
 
         <div id="messages" class="messages"></div>
 
-        <div class="input-panel">
-            <button onclick="triggerFile()" style="background:#3f3f46;">📎</button>
-            <input type="file" id="uploader" accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display:none;" onchange="handleFile(event)">
-            <input id="text" placeholder="พิมพ์ข้อความ หรือแนบไฟล์รูป/PDF/Word..." onkeypress="if(event.key==='Enter') send()">
-            <button onclick="send()" class="btn-send">ส่ง</button>
+        <div class="input-panel-wrapper">
+            <div id="attachment-area"></div>
+            <div class="input-panel">
+                <button onclick="triggerFileAttachment()" class="btn-attach" title="แนบภาพ, PDF หรือไฟล์ Word">📎</button>
+                <input type="file" id="main-file-uploader" accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display: none;" onchange="handleFileAttachment(event)">
+                
+                <input id="text" placeholder="พิมพ์ข้อความ หรือแนบไฟล์รูปภาพ/PDF/Word ให้บอทช่วยสรุปงาน..." onkeypress="if(event.key==='Enter') send()">
+                <button onclick="send()">ส่ง</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // ตั้งค่าคอนฟิกสำหรับแปลงไฟล์ PDF
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
         marked.setOptions({ breaks: true, highlight: (c, l) => hljs.highlight(l ? l : 'plaintext', c).value });
 
-        let chatHistory = [], geminiHistory = [], currentFile = null;
-        const SYSTEM_INSTRUCTION = "คุณคือผู้ช่วยภาษาไทยที่ฉลาด ตอบตรงประเด็น กระชับ ไม่เยิ่นเย้อ ประหยัดคำพูดและโทเค็น";
+        const keyInput = document.getElementById("key");
+        let chatHistory = []; let geminiHistory = []; let rawAiAnswers = []; let lastUserMessage = "";
+        
+        // ตัวแปรเก็บข้อมูลวัตถุไฟล์ชั่วคราวก่อนกดส่ง
+        let currentAttachedFile = null;
 
-        function loadKey() {
-            const m = document.getElementById("model").value;
-            document.getElementById("key").value = localStorage.getItem(m === "gemini-direct" ? "g_key" : "or_key") || "";
+        // ฝังคำสั่งควบคุมสำนวนบาลีสนามหลวงลงใน Instruction หลัก
+        const GLOBAL_SYSTEM_INSTRUCTION = "คุณคือผู้ช่วยภาษาไทยที่เป็นมิตร ฉลาด และเชี่ยวชาญการตรวจเอกสารและโค้ด ข้อสำคัญ: ทุกครั้งที่มีเนื้อหาหรือคำถามที่เกี่ยวกับพระพุทธศาสนา บทสวด หรือ 'ภาษาบาลี' คุณต้องแปลและเรียบเรียงในสำนวนสนามหลวงเต็มรูปแบบตามมาตรฐานความถูกต้องของพระปริยัติธรรมอย่างเคร่งครัด";
+
+        function handleKeyUIRefresh() {
+            const sm = document.getElementById("model").value;
+            if (sm === "gemini-direct") { keyInput.placeholder = "Google Studio API Key (AIZA...)"; keyInput.value = localStorage.getItem("gemini_direct_key") || ""; }
+            else { keyInput.placeholder = "OpenRouter API Key (sk-or...)"; keyInput.value = localStorage.getItem("or_key") || ""; }
         }
         function saveKey() {
-            const m = document.getElementById("model").value;
-            localStorage.setItem(m === "gemini-direct" ? "g_key" : "or_key", document.getElementById("key").value.trim());
-            alert("บันทึกคีย์แล้ว");
+            const sm = document.getElementById("model").value; const val = keyInput.value.trim();
+            if (sm === "gemini-direct") localStorage.setItem("gemini_direct_key", val); else localStorage.setItem("or_key", val);
         }
-        document.getElementById("model").addEventListener("change", loadKey);
-        loadKey();
+        document.getElementById("model").addEventListener("change", () => { handleKeyUIRefresh(); const ms = document.getElementById("model"); document.getElementById("current-model").textContent = "ระบบสแตนด์บาย: " + ms.options[ms.selectedIndex].text; });
+        handleKeyUIRefresh(); document.getElementById("current-model").textContent = "ระบบสแตนด์บาย: " + document.getElementById("model").options[0].text;
 
         function clearMemory() {
-            chatHistory = []; geminiHistory = []; currentFile = null;
+            chatHistory = []; geminiHistory = []; rawAiAnswers = []; lastUserMessage = ""; currentAttachedFile = null;
             document.getElementById("messages").innerHTML = ""; document.getElementById("attachment-area").innerHTML = "";
+            alert("ล้างระบบเรียบร้อย!");
         }
+        async function checkKey() { saveKey(); alert("บันทึก API Key สำเร็จ!"); }
 
-        function triggerFile() { document.getElementById("uploader").click(); }
+        // ================= ฟีเจอร์: การแนบและประมวลผลไฟล์ภายในหน้าเว็บ (Client-Side Parsers) =================
+        function triggerFileAttachment() { document.getElementById("main-file-uploader").click(); }
 
-        async function handleFile(e) {
-            const file = e.target.files[0]; if (!file) return;
-            currentFile = { name: file.name, type: file.type, textData: "", base64Data: "" };
+        async function handleFileAttachment(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            currentAttachedFile = { name: file.name, type: file.type, rawBlob: file, textData: "", base64Data: "", mimeType: file.type };
             const area = document.getElementById("attachment-area");
 
+            // 1. จัดการกลุ่มไฟล์รูปภาพ (แปลงเป็น Base64 สำหรับ Multimodal AI)
             if (file.type.startsWith("image/")) {
-                const r = new FileReader();
-                r.onload = () => { currentFile.base64Data = r.result.split(",")[1]; area.innerHTML = `<div class="attachment-badge">🖼️ ${file.name}</div>`; };
-                r.readAsDataURL(file);
-            } else if (file.name.endsWith(".docx")) {
-                const r = new FileReader();
-                r.onload = () => { mammoth.extractRawText({ arrayBuffer: r.result }).then(res => { currentFile.textData = res.value; area.innerHTML = `<div class="attachment-badge">📝 Word Loaded</div>`; }); };
-                r.readAsArrayBuffer(file);
-            } else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-                const r = new FileReader();
-                r.onload = async () => {
-                    const pdf = await pdfjsLib.getDocument(new Uint8Array(r.result)).promise;
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const txt = await page.getTextContent();
-                        currentFile.textData += txt.items.map(item => item.str).join(" ") + "\n";
-                    }
-                    area.innerHTML = `<div class="attachment-badge">📕 PDF Loaded (${pdf.numPages} หน้า)</div>`;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentAttachedFile.base64Data = e.target.result.split(",")[1];
+                    area.innerHTML = `<div class="attachment-badge">🖼️ รูปภาพ: ${file.name} <button onclick="clearAttachment()">×</button></div>`;
                 };
-                r.readAsArrayBuffer(file);
-            } else {
-                const r = new FileReader();
-                r.onload = () => { currentFile.textData = r.result; area.innerHTML = `<div class="attachment-badge">📄 Text Loaded</div>`; };
-                r.readAsText(file);
+                reader.readAsDataURL(file);
+            } 
+            // 2. จัดการไฟล์เอกสาร Word (.docx) -> สกัดออกมาเป็นข้อความธรรมดา
+            else if (file.name.endsWith(".docx")) {
+                area.innerHTML = `<div class="attachment-badge">⏳ กำลังอ่านไฟล์ Word...</div>`;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    mammoth.extractRawText({ arrayBuffer: e.target.result })
+                        .then(function(result) {
+                            currentAttachedFile.textData = result.value;
+                            area.innerHTML = `<div class="attachment-badge">📝 เอกสาร Word: ${file.name} <button onclick="clearAttachment()">×</button></div>`;
+                        }).catch(() => { alert("ไม่สามารถอ่านไฟล์ Word นี้ได้"); clearAttachment(); });
+                };
+                reader.readAsArrayBuffer(file);
             }
-            e.target.value = "";
+            // 3. จัดการไฟล์เอกสาร PDF -> สกัดข้อความภาษาไทย/อังกฤษทีละหน้า
+            else if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+                area.innerHTML = `<div class="attachment-badge">⏳ กำลังสกัดเนื้อหา PDF...</div>`;
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const typedarray = new Uint8Array(e.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let extractedText = "";
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageItems = textContent.items.map(item => item.str);
+                            extractedText += pageItems.join(" ") + "\n";
+                        }
+                        currentAttachedFile.textData = extractedText;
+                        area.innerHTML = `<div class="attachment-badge">📕 ไฟล์ PDF (${pdf.numPages} หน้า): ${file.name} <button onclick="clearAttachment()">×</button></div>`;
+                    } catch (err) {
+                        alert("การดึงข้อมูลจาก PDF ติดขัด"); clearAttachment();
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+            // 4. ไฟล์ข้อความทั่วไป (.txt)
+            else {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentAttachedFile.textData = e.target.result;
+                    area.innerHTML = `<div class="attachment-badge">📄 ไฟล์ข้อความ: ${file.name} <button onclick="clearAttachment()">×</button></div>`;
+                };
+                reader.readAsText(file);
+            }
+            event.target.value = ""; // รีเซ็ตตัวเลือก
         }
 
-        async function send() {
-            let txt = document.getElementById("text").value.trim();
-            if (!txt && !currentFile) return;
+        function clearAttachment() { currentAttachedFile = null; document.getElementById("attachment-area").innerHTML = ""; }
 
+        // ================= ระบบการส่งข้อความเข้าแชทหลัก =================
+        async function send() {
+            let text = document.getElementById("text").value.trim();
+            if (!text && !currentAttachedFile) return;
+
+            lastUserMessage = text;
             const box = document.getElementById("messages");
-            let html = `<div class="msg user">`;
-            if (currentFile && currentFile.type.startsWith("image/")) html += `<img class="chat-img-preview" src="data:${currentFile.type};base64,${currentFile.base64Data}">`;
-            html += `${txt || "วิเคราะห์ไฟล์นี้"}</div>`;
-            box.innerHTML += html;
+            let userHtml = `<div class="msg user">`;
+
+            // แสดงพรีวิวรูปเล็ก ๆ ในฝั่งแชทผู้ใช้ (ถ้ามีการแนบภาพ)
+            if (currentAttachedFile && currentAttachedFile.type.startsWith("image/")) {
+                userHtml += `<img class="chat-img-preview" src="data:${currentAttachedFile.mimeType};base64,${currentAttachedFile.base64Data}">`;
+            }
+            if (currentAttachedFile && !currentAttachedFile.type.startsWith("image/")) {
+                userHtml += `<div style="font-size:12px; opacity:0.8; margin-bottom:4px;">📎 <i>แนบไฟล์เอกสาร: ${currentAttachedFile.name}</i></div>`;
+            }
+            userHtml += `${text || "ช่วยวิเคราะห์ไฟล์นี้ให้หน่อย"}</div>`;
+            box.innerHTML += userHtml;
             document.getElementById("text").value = "";
 
-            await executeRequest(txt, currentFile);
-            currentFile = null; document.getElementById("attachment-area").innerHTML = "";
+            renderInlineRetryButton();
+
+            // ส่งข้อมูลไปยัง AI Core Engine
+            await executeAIRequest(text, currentAttachedFile);
+            clearAttachment();
         }
 
-        async function executeRequest(promptText, fileObj) {
+        function renderInlineRetryButton() {
+            const ob = document.getElementById("latest-retry-btn"); if (ob) ob.remove();
             const box = document.getElementById("messages");
-            const loading = document.createElement("div"); loading.className = "msg ai"; loading.innerHTML = "...";
+            const rc = document.createElement("div"); rc.className = "inline-retry-container"; rc.id = "latest-retry-btn";
+            rc.innerHTML = `<button onclick="regenerate()" class="btn-inline-retry">🔄 ถามซ้ำคำถามเดิม</button>`;
+            box.appendChild(rc);
+        }
+
+        async function regenerate() {
+            if (!lastUserMessage) return alert("ไม่มีคำถามเดิมให้ส่งซ้ำครับ");
+            document.getElementById("messages").innerHTML += `<div class="msg user" style="opacity:0.7;">🔄 คำสั่งซ้ำคำเดิม: ${lastUserMessage}</div>`;
+            renderInlineRetryButton();
+            
+            const sm = document.getElementById("model").value;
+            if (sm === "gemini-direct") { if (geminiHistory.length > 1) { geminiHistory.pop(); geminiHistory.pop(); } }
+            else { if (chatHistory.length > 1) { chatHistory.pop(); chatHistory.pop(); } }
+            
+            await executeAIRequest(lastUserMessage, null);
+        }
+
+        async function executeAIRequest(userPrompt, fileObject) {
+            const box = document.getElementById("messages");
+            const loading = document.createElement("div"); loading.className = "msg ai"; loading.innerHTML = "กำลังอ่านและวิเคราะห์ข้อมูล...";
             box.appendChild(loading); box.scrollTop = box.scrollHeight;
 
             try {
-                const m = document.getElementById("model").value;
-                let res;
-                if (m === "gemini-direct") {
-                    res = await fetchGemini(promptText, fileObj);
+                const sm = document.getElementById("model").value;
+                let result;
+
+                if (sm === "gemini-direct") {
+                    result = await fetchFromGeminiDirect(userPrompt, fileObject);
                 } else {
-                    let p = promptText;
-                    if (fileObj && fileObj.textData) p += `\n\n[File: ${fileObj.name}]\n${fileObj.textData}`;
-                    res = await fetchOpenRouter(p, m);
+                    // หากเป็นโมเดล Text ทั่วไปของ OpenRouter จะนำข้อความสกัดจากเอกสารไปผูกพ่วงท้ายประโยคคำถาม
+                    let processedPrompt = userPrompt;
+                    if (fileObject && fileObject.textData) {
+                        processedPrompt += `\n\n[ข้อมูลที่ระบบดึงมาจากไฟล์ชื่อเอกสาร ${fileObject.name}]:\n${fileObject.textData}`;
+                    } else if (fileObject && fileObject.base64Data) {
+                        processedPrompt += `\n\n(ผู้ใช้แนบรูปภาพชื่อไฟล์ ${fileObject.name} เข้ามา แต่โมเดลนี้ไม่รองรับระบบดวงตา กรุณาเปลี่ยนเป็นโมเดล Gemini 2.5 Flash)`;
+                    }
+                    result = await fetchFromOpenRouter(processedPrompt, sm);
                 }
-                loading.innerHTML = `<span class="model-tag">🤖 ${res.model}</span><br><div>${marked.parse(res.answer)}</div>`;
-                loading.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
-            } catch (e) { loading.innerHTML = "❌ Error: " + e.message; }
+
+                rawAiAnswers.push(result.answer);
+                loading.innerHTML = `<button class="copy-btn">📋 ก๊อปปี้</button><div class="model-tag">🤖 ${result.modelName}</div><br><div class="markdown-body">${marked.parse(result.answer)}</div>`;
+                loading.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+                setupGlobalCopy(loading, result.answer);
+            } catch (e) { loading.innerHTML = "❌ ติดขัด: " + e.message; }
             box.scrollTop = box.scrollHeight;
         }
 
-        async function fetchGemini(promptText, fileObj) {
-            let key = localStorage.getItem("g_key") || ""; if (!key) throw new Error("ขาดคีย์ Gemini");
-            let parts = [];
-            if (fileObj && fileObj.base64Data) {
-                parts.push({ inlineData: { mimeType: fileObj.type, data: fileObj.base64Data } });
-                parts.push({ text: promptText || "อธิบายภาพนี้" });
-            } else if (fileObj && fileObj.textData) {
-                parts.push({ text: `${promptText || "สรุปไฟล์นี้"}\n\n[File: ${fileObj.name}]\n${fileObj.textData}` });
-            } else { parts.push({ text: promptText }); }
-
-            geminiHistory.push({ role: "user", parts });
-            if (geminiHistory.length > 10) geminiHistory.shift();
-
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: geminiHistory, systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] }, generationConfig: { temperature: 0.3 } })
-            });
-            if (!res.ok) throw new Error("API มีปัญหา");
-            const data = await res.json();
-            let ans = data.candidates[0].content.parts[0].text;
-            geminiHistory.push({ role: "model", parts: [{ text: ans }] });
-            return { answer: ans, model: "Gemini 2.5 Flash" };
+        function setupGlobalCopy(element, text) {
+            const b = element.querySelector('.copy-btn'); if (!b) return;
+            b.onclick = () => { navigator.clipboard.writeText(text); b.textContent = "✅ สำเร็จ!"; setTimeout(() => b.textContent = "📋 ก๊อปปี้", 2000); };
         }
 
-        async function fetchOpenRouter(text, modelId) {
-            let key = localStorage.getItem("or_key") || ""; if (!key) throw new Error("ขาดคีย์ OpenRouter");
-            chatHistory.push({ role: "user", content: text });
-            if (chatHistory.length > 10) chatHistory.shift();
+        // ================= ENGINE 1: GOOGLE GEMINI DIRECT API (มัลติโมดัลอ่านรูปและข้อความได้สมบูรณ์) =================
+        async function fetchFromGeminiDirect(promptText, fileObj) {
+            let key = localStorage.getItem("gemini_direct_key") || "";
+            if (!key) throw new Error("กรุณาใส่ Google Gemini API Key ด้านบนก่อนครับ");
+
+            let partsArray = [];
+            
+            // กรณีแนบรูปภาพส่งเข้าไปยังระบบ API โดยตรง
+            if (fileObj && fileObj.base64Data && fileObj.type.startsWith("image/")) {
+                partsArray.push({ inlineData: { mimeType: fileObj.mimeType, data: fileObj.base64Data } });
+                partsArray.push({ text: promptText || "ช่วยวิเคราะห์หรืออธิบายรูปภาพนี้ทีครับ" });
+            } 
+            // กรณีสกัดได้เนื้อความมาจากไฟล์เอกสาร (.docx / .pdf)
+            else if (fileObj && fileObj.textData) {
+                partsArray.push({ text: `${promptText || "วิเคราะห์สรุปงานจากข้อมูลนี้"}\n\n[เนื้อหาในเอกสารแนบชื่อ ${fileObj.name}]:\n${fileObj.textData}` });
+            } 
+            // ข้อความตัวอักษรปกติ
+            else {
+                partsArray.push({ text: promptText });
+            }
+
+            geminiHistory.push({ role: "user", parts: partsArray });
+            while (geminiHistory.length > 16) geminiHistory.shift();
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: geminiHistory,
+                    systemInstruction: { parts: [{ text: GLOBAL_SYSTEM_INSTRUCTION }] },
+                    generationConfig: { temperature: 0.5 }
+                })
+            });
+
+            if (!res.ok) { const ed = await res.json().catch(() => ({})); throw new Error(ed.error ? ed.error.message : `HTTP ${res.status}`); }
+            const data = await res.json();
+            
+            let aiAnswer = data.candidates[0].content.parts[0].text;
+            geminiHistory.push({ role: "model", parts: [{ text: aiAnswer }] });
+
+            return { answer: aiAnswer, modelName: "google/gemini-2.5-flash (Direct Vision)" };
+        }
+
+        // ================= ENGINE 2: OPENROUTER ENGINE =================
+        async function fetchFromOpenRouter(text, modelId) {
+            let key = localStorage.getItem("or_key") || "";
+            if (!key) throw new Error("กรุณากรอก OpenRouter API Key ก่อนใช้งานค่ายนี้ครับ");
+
+            let tempHistory = [...chatHistory, { role: "user", content: text }];
+            while (tempHistory.length > 14) tempHistory.shift();
 
             const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ model: modelId, messages: [{ role: "system", content: SYSTEM_INSTRUCTION }, ...chatHistory], temperature: 0.3 })
+                body: JSON.stringify({
+                    model: modelId,
+                    temperature: 0.5,
+                    messages: [{ role: "system", content: GLOBAL_SYSTEM_INSTRUCTION }, ...tempHistory]
+                })
             });
+
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
-            let ans = data.choices[0].message.content;
-            chatHistory.push({ role: "assistant", content: ans });
-            return { answer: ans, model: data.model };
+
+            let aiAnswer = data.choices[0].message.content;
+            chatHistory.push({ role: "user", content: text });
+            chatHistory.push({ role: "assistant", content: aiAnswer });
+
+            return { answer: aiAnswer, modelName: data.model || modelId };
+        }
+
+        // ================= ฟีเจอร์ย่อย: จัดการเซฟประวัติบทสนทนาเข้าไฟล์คอมพิวเตอร์ =================
+        function saveChatToFile() {
+            const b = document.getElementById("messages"); if (b.children.length === 0) return alert("ไม่มีข้อมูลแชทให้บันทึก");
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ uiHtml: b.innerHTML, chatHistory, geminiHistory, rawAiAnswers, lastUserMessage }));
+            const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", `ai-smart-chat-${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.json`);
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+        function triggerHistoryUpload() { document.getElementById("history-uploader").click(); }
+        function loadChatFromFile(event) {
+            const f = event.target.files[0]; if (!f) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const pd = JSON.parse(e.target.result);
+                    chatHistory = pd.chatHistory || []; geminiHistory = pd.geminiHistory || []; rawAiAnswers = pd.rawAiAnswers || []; lastUserMessage = pd.lastUserMessage || "";
+                    document.getElementById("messages").innerHTML = pd.uiHtml;
+                    document.querySelectorAll('.msg.ai').forEach((le, idx) => { if (rawAiAnswers[idx]) setupGlobalCopy(le, rawAiAnswers[idx]); });
+                    document.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
+                    alert("โหลดประวัติแชทเดิมเสร็จสิ้น!");
+                } catch { alert("ไฟล์ประวัติแชทไม่ถูกต้อง"); }
+            };
+            reader.readAsText(f);
         }
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Safe Free AI Hub (Hybrid Engine)</title>
+    <title>Safe Free AI Hub (File System & Hybrid Engine)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -35,13 +35,18 @@
         .btn-clear { background: #ef4444; color: white; }
         .btn-clear:hover { background: #f87171; }
         
-        /* ปุ่มหมวดหมู่จัดการไฟล์แชทที่เพิ่มเข้ามาใหม่ */
+        /* ปุ่มหมวดหมู่จัดการไฟล์แชท */
         .btn-save { background: #3b82f6; color: white; }
         .btn-save:hover { background: #60a5fa; }
         .btn-upload { background: #a855f7; color: white; }
         .btn-upload:hover { background: #c084fc; }
+        
+        /* ปุ่มจัดการโฟลเดอร์ในคอมพิวเตอร์ */
+        .btn-folder { background: #eab308; color: #0f172a; }
+        .btn-folder:hover { background: #fde047; }
 
         #current-model { font-size: 12px; color: #a1a1aa; display: block; margin-top: 4px; text-align: center; }
+        #folder-status { font-size: 12px; color: #eab308; display: block; text-align: center; margin-top: 2px; font-weight: 500; }
 
         /* พื้นที่แสดงข้อความแชท */
         .messages { flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: #0e0e10; padding-bottom: 90px; }
@@ -51,6 +56,11 @@
         .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
         .ai { background: #18181b; color: #e4e4e7; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #27272a; position: relative; }
         
+        /* ปุ่มรีคำถามแบบ Inline ใต้กล่องข้อความผู้ใช้ล่าสุด */
+        .inline-retry-container { align-self: flex-end; margin-top: -8px; margin-bottom: 4px; }
+        .btn-inline-retry { background: #27272a; color: #a1a1aa; padding: 4px 10px; font-size: 11px; border-radius: 6px; border: 1px solid #3f3f46; }
+        .btn-inline-retry:hover { background: #3f3f46; color: white; }
+
         /* Tags & Buttons ภายในฝั่ง AI */
         .model-tag { font-size: 11px; color: #00ff99; background: #09090b; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; border: 1px solid #27272a; }
         .copy-btn { background: #27272a; padding: 4px 8px; font-size: 11px; color: #00ff99; border-radius: 4px; cursor: pointer; float: right; border: 1px solid #3f3f46; margin-bottom: 6px; }
@@ -72,8 +82,8 @@
         /* ปรับแต่งการแสดงผลเมื่อเข้าสู่หน้าจอมือถือขนาดเล็ก */
         @media (min-width: 600px) {
             .control-row { flex-direction: row; align-items: center; }
-            .select-wrapper { width: 40%; }
-            .key-group { width: 60%; }
+            .select-wrapper { width: 35%; }
+            .key-group { width: 65%; }
             h1 { font-size: 22px; }
         }
     </style>
@@ -94,6 +104,7 @@
                 <div class="key-group">
                     <input id="key" type="password" placeholder="กรุณากรอก API Key">
                     <button onclick="checkKey()" class="btn-check">🔍 จำ Key</button>
+                    <button onclick="selectLocalDirectory()" class="btn-folder">📁 เชื่อมโฟลเดอร์คอม</button>
                     <button onclick="saveChatToFile()" class="btn-save">💾 เซฟแชท</button>
                     <button onclick="triggerUpload()" class="btn-upload">📤 อัปโหลดแชท</button>
                     <input type="file" id="file-uploader" accept=".json" style="display: none;" onchange="loadChatFromFile(event)">
@@ -101,12 +112,13 @@
                 </div>
             </div>
             <span id="current-model"></span>
+            <span id="folder-status">📂 สถานะ: ยังไม่ได้เลือกโฟลเดอร์คอมพิวเตอร์</span>
         </div>
 
         <div id="messages" class="messages"></div>
 
         <div class="input-panel">
-            <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI..." onkeypress="if(event.key==='Enter') send()">
+            <input id="text" placeholder="พิมพ์ข้อความคุยกับ AI หรือระบุชื่อไฟล์ในโฟลเดอร์เพื่อให้เปิดอ่าน..." onkeypress="if(event.key==='Enter') send()">
             <button onclick="send()">ส่ง</button>
         </div>
     </div>
@@ -121,13 +133,15 @@
         });
 
         const keyInput = document.getElementById("key");
-        let chatHistory = []; // ประวัติแชทหลักสำหรับ OpenRouter
-        let geminiHistory = []; // ประวัติแชทเฉพาะโครงสร้างของ Google Direct
-        
-        // ตัวแปรชั่วคราวเก็บข้อความดิบ (Raw Text) ของ AI แต่ละกล่องไว้ใช้ทำระบบ Copy Code หลังจากโหลดไฟล์กลับมาใหม่
+        let chatHistory = []; 
+        let geminiHistory = []; 
         let rawAiAnswers = []; 
+        let lastUserMessage = ""; // ตัวแปรเก็บคำถามล่าสุดสำหรับระบบรีคำถาม
 
-        // ฟังก์ชันช่วยเลือกแสดง Placeholder และดึง Key ให้ตรงตามค่ายที่เลือก
+        // ตัวแปรสำหรับเก็บ Handle ของโฟลเดอร์คอมพิวเตอร์และรายการไฟล์ภายใน
+        let dirHandle = null;
+        let folderFilesMap = {}; 
+
         function handleKeyUIRefresh() {
             const selectedModel = document.getElementById("model").value;
             if (selectedModel === "gemini-direct") {
@@ -157,15 +171,17 @@
             display.textContent = "ระบบกำลังสแตนด์บายที่: " + name;
         }
         document.getElementById("model").addEventListener("change", updateCurrentModel);
-        
-        // รันครั้งแรกตอนโหลดหน้าเว็บ
         updateCurrentModel();
 
         function clearMemory() {
             chatHistory = [];
             geminiHistory = [];
             rawAiAnswers = [];
+            lastUserMessage = "";
+            dirHandle = null;
+            folderFilesMap = {};
             document.getElementById("messages").innerHTML = "";
+            document.getElementById("folder-status").textContent = "📂 สถานะ: ยังไม่ได้เลือกโฟลเดอร์คอมพิวเตอร์";
             alert("ล้างความจำการคุยเรียบร้อยแล้ว!");
         }
 
@@ -176,9 +192,71 @@
             alert("บันทึก API Key ของระบบนี้สำเร็จแล้ว!");
         }
 
-        // ================= ฟีเจอร์ใหม่: เซฟและอัปโหลดประวัติแชท =================
-        
-        // 1. ฟังก์ชันส่งออกไฟล์แชท (.json) ลงเครื่องมือถือหรือคอมพิวเตอร์
+        // ================= ฟีเจอร์: เชื่อมต่อและสแกนโฟลเดอร์ในคอมพิวเตอร์ด้วย File System Access API =================
+        async function selectLocalDirectory() {
+            if (!window.showDirectoryPicker) {
+                return alert("เบราว์เซอร์ของคุณไม่รองรับการเข้าถึงระบบโฟลเดอร์ กรุณาใช้งานผ่าน Google Chrome หรือ Microsoft Edge บนคอมพิวเตอร์ครับ");
+            }
+            try {
+                dirHandle = await window.showDirectoryPicker();
+                folderFilesMap = {};
+                let fileListNames = [];
+
+                // สแกนอ่านรายชื่อไฟล์ทั้งหมดที่อยู่ในระดับโฟลเดอร์หลักแบบตื้น (ไม่รวมโฟลเดอร์ย่อยลึก ๆ เพื่อความรวดเร็ว)
+                for await (const entry of dirHandle.values()) {
+                    if (entry.kind === 'file') {
+                        folderFilesMap[entry.name.toLowerCase()] = entry;
+                        fileListNames.push(entry.name);
+                    }
+                }
+
+                document.getElementById("folder-status").textContent = `📁 เชื่อมต่อโฟลเดอร์: [${dirHandle.name}] เรียบร้อยแล้ว (พบไฟล์ทั้งหมด ${fileListNames.length} ไฟล์)`;
+                
+                // แจ้งระบบแชทให้รับทราบรายชื่อไฟล์ที่สแกนเจอทันที
+                const systemNotice = `ขณะนี้ผู้ใช้ได้เปิดการเชื่อมต่อระบบไฟล์ในโฟลเดอร์คอมพิวเตอร์ชื่อว่า "${dirHandle.name}" และนี่คือรายชื่อไฟล์ทั้งหมดภายในโฟลเดอร์นี้: ${fileListNames.join(', ') || 'ไม่มีไฟล์อยู่ข้างใน'} หากผู้ใช้ต้องการให้อ่านหรือสแกนไฟล์ใด ให้แนะนำได้เลย`;
+                injectSystemContext(systemNotice);
+
+                alert(`🎉 เชื่อมต่อโฟลเดอร์ "${dirHandle.name}" สำเร็จ! AI รับทราบรายชื่อไฟล์ทั้งหมดเรียบร้อยแล้วครับ`);
+            } catch (err) {
+                console.error(err);
+                alert("❌ ยกเลิกการเข้าถึงหรือเกิดข้อผิดพลาด: " + err.message);
+            }
+        }
+
+        // ฟังก์ชันเบื้องหลังสำหรับส่องดูว่าในคำถามแชทมีชื่อไฟล์ที่สแกนไว้อยู่หรือไม่ ถ้ามีจะแอบโหลดเนื้อหาข้อความส่งพ่วงไปให้ AI ทันที
+        async function autoDetectAndReadFilesContent(userText) {
+            if (!dirHandle || Object.keys(folderFilesMap).length === 0) return "";
+            
+            let attachedContent = "";
+            let lowerText = userText.toLowerCase();
+
+            for (const filename in folderFilesMap) {
+                if (lowerText.includes(filename)) {
+                    try {
+                        const fileHandle = folderFilesMap[filename];
+                        const file = await fileHandle.getFile();
+                        
+                        // อนุญาตให้อ่านเฉพาะไฟล์จำพวกข้อความ/โค้ด เพื่อความปลอดภัยของหน่วยความจำ
+                        if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.js') || file.name.endsWith('.html') || file.name.endsWith('.css') || file.name.endsWith('.json') || file.name.endsWith('.md')) {
+                            const content = await file.text();
+                            attachedContent += `\n\n[เนื้อหาภายในไฟล์คอมพิวเตอร์ชื่อ "${fileHandle.name}"]: \n${content}\n[จบเนื้อหาไฟล์]`;
+                        }
+                    } catch (e) {
+                        console.warn(`ไม่สามารถอ่านเนื้อหาในไฟล์ ${filename} ได้:`, e);
+                    }
+                }
+            }
+            return attachedContent;
+        }
+
+        function injectSystemContext(noticeText) {
+            geminiHistory.push({ role: "user", parts: [{ text: `[System Update]: ${noticeText}` }] });
+            geminiHistory.push({ role: "model", parts: [{ text: "รับทราบครับ ผมจดจำรายชื่อโครงสร้างไฟล์ในโฟลเดอร์นี้ไว้แล้ว พร้อมตอบคำถามถัดไปครับ" }] });
+            chatHistory.push({ role: "user", content: `[System Update]: ${noticeText}` });
+            chatHistory.push({ role: "assistant", content: "รับทราบครับ ผมจดจำรายชื่อโครงสร้างไฟล์ในโฟลเดอร์นี้ไว้แล้ว พร้อมตอบคำถามถัดไปครับ" });
+        }
+
+        // ================= ฟีเจอร์: เซฟและอัปโหลดประวัติแชท =================
         function saveChatToFile() {
             const box = document.getElementById("messages");
             if (box.children.length === 0) return alert("ไม่มีข้อความแชทให้บันทึกในขณะนี้ครับ");
@@ -188,6 +266,7 @@
                 chatHistory: chatHistory,
                 geminiHistory: geminiHistory,
                 rawAiAnswers: rawAiAnswers,
+                lastUserMessage: lastUserMessage,
                 savedAt: new Date().toISOString()
             };
 
@@ -195,7 +274,6 @@
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
             
-            // ตั้งชื่อไฟล์ตามวันเวลาปัจจุบัน
             const timeStamp = new Date().toLocaleDateString('th-TH').replace(/\//g, '-');
             downloadAnchor.setAttribute("download", `ai-chat-history-${timeStamp}.json`);
             document.body.appendChild(downloadAnchor);
@@ -203,12 +281,10 @@
             downloadAnchor.remove();
         }
 
-        // 2. ฟังก์ชันจำลองการกดคลิกเลือกไฟล์
         function triggerUpload() {
             document.getElementById("file-uploader").click();
         }
 
-        // 3. ฟังก์ชันอ่านไฟล์ที่อัปโหลดเข้ามา แล้วนำไปใส่ในระบบแชทต่อ
         function loadChatFromFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -217,29 +293,24 @@
             reader.onload = function(e) {
                 try {
                     const parsedData = JSON.parse(e.target.result);
-                    
                     if (!parsedData.uiHtml || (!parsedData.chatHistory && !parsedData.geminiHistory)) {
                         throw new Error("โครงสร้างไฟล์ไม่ถูกต้องหรือไม่รองรับ");
                     }
 
-                    // คืนค่าข้อมูลประวัติและ UI กลับมาบนหน้าจอ
                     chatHistory = parsedData.chatHistory || [];
                     geminiHistory = parsedData.geminiHistory || [];
                     rawAiAnswers = parsedData.rawAiAnswers || [];
+                    lastUserMessage = parsedData.lastUserMessage || "";
                     
                     const box = document.getElementById("messages");
                     box.innerHTML = parsedData.uiHtml;
 
-                    // ผูกระบบปุ่มก๊อปปี้โค้ดให้กับกล่อง AI เก่าที่เพิ่งดาวน์โหลดเข้ามาใหม่
                     const aiMessages = box.querySelectorAll('.msg.ai');
                     aiMessages.forEach((loadingElement, index) => {
                         const rawText = rawAiAnswers[index];
-                        if (rawText) {
-                            setupGlobalCopy(loadingElement, rawText);
-                        }
+                        if (rawText) setupGlobalCopy(loadingElement, rawText);
                     });
 
-                    // ไฮไลท์ Syntax โค้ดคอมพิวเตอร์ใหม่อีกครั้ง
                     box.querySelectorAll('pre code').forEach((el) => hljs.highlightElement(el));
                     box.scrollTop = box.scrollHeight;
 
@@ -247,39 +318,85 @@
                 } catch (err) {
                     alert("❌ เกิดข้อผิดพลาด: ไม่สามารถอ่านไฟล์นี้ได้ (" + err.message + ")");
                 }
-                // ล้างค่าอินพุตเพื่อให้เลือกไฟล์เดิมซ้ำได้ในอนาคต
                 event.target.value = ""; 
             };
             reader.readAsText(file);
         }
 
-        // ===================================================================
+        // ================= ระบบจัดการส่งข้อความและสร้างปุ่ม Inline รีคำถามล่าสุด =================
+        function renderInlineRetryButton() {
+            const oldButton = document.getElementById("latest-retry-btn");
+            if (oldButton) oldButton.remove();
+
+            const box = document.getElementById("messages");
+            const btnContainer = document.createElement("div");
+            btnContainer.className = "inline-retry-container";
+            btnContainer.id = "latest-retry-btn";
+            btnContainer.innerHTML = `<button onclick="regenerate()" class="btn-inline-retry">🔄 รีคำถามล่าสุด</button>`;
+            box.appendChild(btnContainer);
+        }
 
         async function send() {
             let text = document.getElementById("text").value.trim();
             if (!text) return;
 
+            lastUserMessage = text;
+
             const box = document.getElementById("messages");
             box.innerHTML += `<div class="msg user">${text}</div>`;
             document.getElementById("text").value = "";
 
+            renderInlineRetryButton();
+
+            // ตรวจจับอัตโนมัติว่าในแชทมีการอ้างอิงชื่อไฟล์คอมพิวเตอร์หรือไม่
+            let attachedFileContext = await autoDetectAndReadFilesContent(text);
+
+            await executeAIRequest(text, attachedFileContext);
+        }
+
+        async function regenerate() {
+            if (!lastUserMessage) return alert("ยังไม่มีคำถามก่อนหน้านี้ให้ส่งซ้ำครับ");
+
+            const box = document.getElementById("messages");
+            box.innerHTML += `<div class="msg user" style="border: 1px dashed #00cc77; opacity: 0.8;">🔄 <i>ถามซ้ำคำถามเดิม:</i> ${lastUserMessage}</div>`;
+            
+            renderInlineRetryButton();
+
+            // ลบประวัติคู่สนทนาล่าสุดที่พังออกก่อนส่งซ้ำ
+            const selectedModel = document.getElementById("model").value;
+            if (selectedModel === "gemini-direct") {
+                if (geminiHistory.length > 0) geminiHistory.pop(); 
+                if (geminiHistory.length > 0) geminiHistory.pop(); 
+            } else {
+                if (chatHistory.length > 0) chatHistory.pop(); 
+                if (chatHistory.length > 0) chatHistory.pop(); 
+            }
+
+            let attachedFileContext = await autoDetectAndReadFilesContent(lastUserMessage);
+            await executeAIRequest(lastUserMessage, attachedFileContext);
+        }
+
+        async function executeAIRequest(text, extraContext = "") {
+            const box = document.getElementById("messages");
             const loading = document.createElement("div");
             loading.className = "msg ai";
             loading.innerHTML = "กำลังประมวลผล...";
             box.appendChild(loading);
             box.scrollTop = box.scrollHeight;
 
+            // ผสมคำถามแชทเข้ากับเนื้อหาไฟล์ในเครื่อง (ถ้าตรวจพบ)
+            let finalPromptToSend = text + extraContext;
+
             try {
                 const selectedModel = document.getElementById("model").value;
                 let result;
 
                 if (selectedModel === "gemini-direct") {
-                    result = await fetchFromGeminiDirect(text);
+                    result = await fetchFromGeminiDirect(finalPromptToSend);
                 } else {
-                    result = await callAIWithFallback(text);
+                    result = await callAIWithFallback(finalPromptToSend);
                 }
 
-                // บันทึกข้อความดิบเก็บไว้ใน Array เผื่อใช้สำหรับตอนดาวน์โหลดส่งออกไฟล์
                 rawAiAnswers.push(result.answer);
 
                 let htmlResponse = `<button class="copy-btn">📋 ก๊อปปี้โค้ด</button>`;
@@ -366,11 +483,9 @@
             let key = localStorage.getItem("gemini_direct_key") || "";
             if (!key) throw new Error("ยังไม่ได้ใส่ Google Gemini API Key ในช่องด้านบนครับ");
 
-            // อัปเดตประวัติการคุยให้เข้าโครงสร้างเฉพาะของ Google API { role: "user" | "model", parts: [...] }
             geminiHistory.push({ role: "user", parts: [{ text: text }] });
             while (geminiHistory.length > 16) { geminiHistory.shift(); }
 
-            // ตั้งค่า System Instruction บังคับนิสัยบอท
             const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
             
             let body = {
@@ -401,8 +516,6 @@
             }
 
             let aiAnswer = data.candidates[0].content.parts[0].text;
-            
-            // บันทึกคำตอบลงประวัติฝั่งโมเดล
             geminiHistory.push({ role: "model", parts: [{ text: aiAnswer }] });
 
             return { answer: aiAnswer, modelName: "google/gemini-2.5-flash (Direct API)" };
